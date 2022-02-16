@@ -10,7 +10,6 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
     initState(vm)//vm.$options.data 数据劫持
 
     
-
     if(vm.$options.el) {
       // 将数据挂载到这个模板上
       vm.$mount(vm.$options.el)
@@ -21,6 +20,7 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
     const vm = this
     const options = vm.$options
     el = document.querySelector(el)
+    console.log(el ,'el')
 
     // 把模版转换成 对应的渲染函数 =》 虚拟dom vnode diff算法 更新虚拟dom => 真实dom
 
@@ -34,5 +34,6 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
     }
     // options.render就是渲染函数
   }
+
 }
 
