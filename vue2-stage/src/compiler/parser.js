@@ -42,7 +42,6 @@ function start (tagName, attributes) {
 }
 
 function end (tagName) {
-  console.log(tagName, 'end')
   let last = stack.pop()
   if (last.tag !== tagName) {
     throw new Error('标签有误')
@@ -84,7 +83,9 @@ export function parserHTML(html) { // <div id="app">111</div>
       // 如果没有遇到标签结尾就不停的解析
       let attr
       while (!(end  = html.match(startTagClose)) && (attr = html.match(attribute))) {
-        match.attrs.push({name: attr[1], value:attr[3] || attr[4] || attr[5]})
+        console.log(attr, 'attr')
+        match.attrs.push({name: attr[1], value: attr[3] || attr[4] || attr[5]})
+        console.log(match, 'match')
         advance(attr[0].length)
       } 
       if (end) {
@@ -123,3 +124,10 @@ export function parserHTML(html) { // <div id="app">111</div>
   }
   return root
 }
+
+// 看一下用户是否传入了render，没传入可能传入的事template，template如果也没传就解析
+// html => 词法解析（开始标签 ，结束标签， 属性， 文本） => ast语法树 用来描述html语法的 stack = []
+// codegen函数将<div>hello</div> => _c('div', {}, 'hello') => 让字符串执行
+// 字符串转为代码  eval 耗性能 会有作用域问题
+
+// 模版引擎 通过new Function + with 来实现

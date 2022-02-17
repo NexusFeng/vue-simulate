@@ -4,6 +4,88 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
+  // 匹配大括号 {{}}
+  var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g; // {{aaaa}}
+
+  function genProps(attrs) {
+    // [{name: 'xxxx', value: 'hello'}]
+    var str = '';
+
+    for (var i = 0; i < attrs.length; i++) {
+      var attr = attrs[i];
+
+      if (attr.name === 'style') {
+        (function () {
+          //style="border: 1px;font-size: 18px;"
+          var styleObj = {};
+          attr.value.replace(/([^;:]+)\:([^;:]+)/g, function () {
+            styleObj[arguments[1]] = arguments[2];
+          });
+          attr.value = styleObj;
+        })();
+      }
+
+      str += "".concat(attr.name, ":").concat(JSON.stringify(attr.value));
+    } // a: 1, b:2, slice去掉最后的逗号
+
+
+    return "{".concat(str.slice(0, -1), "}");
+  }
+
+  function gen(el) {
+    if (el.type == 1) {
+      return generate(el);
+    } else {
+      var text = el.text;
+
+      if (!defaultTagRE.test(text)) {
+        return "_v(".concat(text, ")");
+      } else {
+        // 'hello'+ arr + 'world'   hello {{arr}} world
+        var tokens = [];
+        var match;
+        var lastIndex = defaultTagRE.lastIndex = 0;
+
+        while (match = defaultTagRE.exec(text)) {
+          // 看有没有匹配到
+          var index = match.index; //开始索引
+
+          if (index > lastIndex) {
+            tokens.push(JSON.stringify(text.slice(lastIndex, index)));
+          }
+
+          tokens.push("_s(".concat(match[1].trim(), ")")); // JSON.stringify
+
+          lastIndex = index + match[0].length;
+        }
+
+        if (lastIndex < text.length) {
+          tokens.push(JSON.stringify(text.slice(lastIndex)));
+        }
+
+        return "_v(".concat(tokens.join('+'), ")");
+      }
+    }
+  }
+
+  function genChildren(el) {
+    var children = el.children; //获取儿子
+
+    if (children) {
+      return children.map(function (c) {
+        return gen(c);
+      }).join(',');
+    }
+  }
+
+  function generate(el) {
+    // _c('div', {id: 'app'},_c('span', {}, 'world'), _v('hello'))
+    //遍历树,将树拼接成字符串
+    var children = genChildren(el);
+    var code = "_c('".concat(el.tag, "', ").concat(el.attrs.length ? genProps(el.attrs) : 'undefined', ")").concat(children ? ",".concat(children) : '');
+    return code;
+  }
+
   // 标签名
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z]*"; // 获取标签名 match后的索引为1的
 
@@ -16,6 +98,7 @@
   var endTag = new RegExp("^<\\/" + qnameCapture + "[^>]*>"); // 匹配属性 aa = "xxx" | 'xxx' | xxx  a=b a="b" a ='b'
 
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配大括号 {{}}
+  //将解析后的结果 组装成一个树结构 ast树 栈
 
   function createAstElement(tagName, attrs) {
     return {
@@ -38,9 +121,9 @@
       root = element;
     }
 
-    element.parent = parent; //当放入栈中时,记录父亲是谁
-
     if (parent) {
+      element.parent = parent; //当放入栈中时,记录父亲是谁
+
       element.children.push(element);
     }
 
@@ -48,7 +131,6 @@
   }
 
   function end(tagName) {
-    console.log(tagName, 'end');
     var last = stack.pop();
 
     if (last.tag !== tagName) {
@@ -66,7 +148,8 @@
         text: text
       });
     }
-  } // html字符串解析成dom树 解析成对应的脚本  <div id = 'app'> {{name}} </div>
+  } // ast (语法层面的描述 js css html) vdom （dom节点）
+  // html字符串解析成dom树 解析成对应的脚本  <div id = 'app'> {{name}} </div>
 
 
   function parserHTML(html) {
@@ -92,10 +175,12 @@
         var attr;
 
         while (!(_end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+          console.log(attr, 'attr');
           match.attrs.push({
             name: attr[1],
             value: attr[3] || attr[4] || attr[5]
           });
+          console.log(match, 'match');
           advance(attr[0].length);
         }
 
@@ -141,12 +226,31 @@
         advance(text.length);
       }
     }
-  }
+
+    return root;
+  } // 看一下用户是否传入了render，没传入可能传入的事template，template如果也没传就解析
+  // html => 词法解析（开始标签 ，结束标签， 属性， 文本） => ast语法树 用来描述html语法的 stack = []
+  // codegen函数将<div>hello</div> => _c('div', {}, 'hello') => 让字符串执行
+  // 字符串转为代码  eval 耗性能 会有作用域问题
+  // 模版引擎 通过new Function + with 来实现
 
   function compileToFunction(template) {
-    parserHTML(template);
-    console.log(root);
-  }
+    var root = parserHTML(template); //生成代码
+
+    var code = generate(root);
+    var render = new Function("with(this){return ".concat(code, "}")); //code中会用到数据,数据在vm上
+
+    return render; // render(){
+    //   return _c('div', {id: 'app'}, 'hello')
+    // }
+    // 虚拟dom
+    // {tag: div, data:{id: 'app', a:1},children: [{text:'hello'}]}
+    // html => ast（只能描述语法 语法不存在的属性无法描述） => render函数 (with + new Function) => 虚拟dom (增加额外的属性) => 生成真实dom
+  } // with用法
+  // let vm = {arr: 1}
+  // with(vm) {
+  //   console.log(arr) // 1
+  // }
 
   function _typeof(obj) {
     "@babel/helpers - typeof";
@@ -379,7 +483,10 @@
           options.render = render;
         }
       } // options.render就是渲染函数
+      // 调用render方法 渲染成真实dom 替换掉页面的内容
 
+
+      mountComponent(vm, el); // 组件挂载过程
     };
   }
 

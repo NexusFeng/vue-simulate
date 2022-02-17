@@ -33,6 +33,9 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
       }
     }
     // options.render就是渲染函数
+    // 调用render方法 渲染成真实dom 替换掉页面的内容
+
+    mountComponent(vm, el) // 组件挂载过程
   }
 
 }

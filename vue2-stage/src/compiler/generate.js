@@ -7,7 +7,7 @@ function genProps(attrs) {// [{name: 'xxxx', value: 'hello'}]
     let attr = attrs[i]
     if (attr.name === 'style') {//style="border: 1px;font-size: 18px;"
       let styleObj = {}
-      attr.value.replace(/([^;:])\:([^;:])/g, () => {
+      attr.value.replace(/([^;:]+)\:([^;:]+)/g, function() {
         styleObj[arguments[1]] = arguments[2]
       })
       attr.value = styleObj
@@ -36,7 +36,7 @@ function gen(el) {
           tokens.push(JSON.stringify(text.slice(lastIndex, index)))
         }
         tokens.push(`_s(${match[1].trim()})`) // JSON.stringify
-        let lastIndex = index + match[0].length
+        lastIndex = index + match[0].length
       }
       if(lastIndex < text.length) {
         tokens.push(JSON.stringify(text.slice(lastIndex)))
