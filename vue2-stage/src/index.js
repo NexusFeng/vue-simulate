@@ -1,6 +1,8 @@
 //用class类写vue不好拆封,所以采用构造函数方式写
 
 import { initMixin } from './init'
+import { lifecycleMixin } from './lifecycle'
+import { renderMixin } from './render'
 
 function Vue(options) {
   // options用户传入选项
@@ -9,5 +11,7 @@ function Vue(options) {
 }
 // 扩展原型
 initMixin(Vue)
+renderMixin(Vue) // _render
+lifecycleMixin(Vue) // _update
 
 export default Vue
