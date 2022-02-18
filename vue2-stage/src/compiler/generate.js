@@ -12,7 +12,7 @@ function genProps(attrs) {// [{name: 'xxxx', value: 'hello'}]
       })
       attr.value = styleObj
     }
-    str += `${attr.name}:${JSON.stringify(attr.value)}`
+    str += `${attr.name}:${JSON.stringify(attr.value)},`
   }
   // a: 1, b:2, slice去掉最后的逗号
   return `{${str.slice(0, -1)}}`

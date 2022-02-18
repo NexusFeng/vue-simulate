@@ -25,7 +25,7 @@
         })();
       }
 
-      str += "".concat(attr.name, ":").concat(JSON.stringify(attr.value));
+      str += "".concat(attr.name, ":").concat(JSON.stringify(attr.value), ",");
     } // a: 1, b:2, slice去掉最后的逗号
 
 
@@ -175,12 +175,10 @@
         var attr;
 
         while (!(_end = html.match(startTagClose)) && (attr = html.match(attribute))) {
-          console.log(attr, 'attr');
           match.attrs.push({
             name: attr[1],
             value: attr[3] || attr[4] || attr[5]
           });
-          console.log(match, 'match');
           advance(attr[0].length);
         }
 
@@ -238,6 +236,7 @@
     var root = parserHTML(template); //生成代码
 
     var code = generate(root);
+    console.log(code, 'code');
     var render = new Function("with(this){return ".concat(code, "}")); //code中会用到数据,数据在vm上
 
     return render; // render(){
@@ -251,6 +250,59 @@
   // with(vm) {
   //   console.log(arr) // 1
   // }
+
+  function patch(oldVnode, vnode) {
+    if (oldVnode.nodeType === 1) {
+      console.log(oldVnode, 'oldVnode'); //用vnode生成真实dom，替换原本的dom元素
+
+      var parentElm = oldVnode.parentNode; //找到它的父亲
+
+      var elm = createElm(vnode); // 根据虚拟节点 创建元素
+
+      parentElm.insertBefore(elm, oldVnode.nextSibling);
+      parentElm.removeChild(oldVnode);
+    }
+  }
+
+  function createElm(vnode) {
+    var tag = vnode.tag;
+        vnode.data;
+        var children = vnode.children,
+        text = vnode.text;
+        vnode.vm;
+
+    if (typeof tag === 'string') {
+      // 元素
+      vnode.el = document.createElement(tag); //虚拟节点会有一个el属性,对应真实节点
+
+      children.forEach(function (child) {
+        vnode.el.appendChild(createElm(child));
+      });
+    } else {
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
+  function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode) {
+      // 既有初始化,又有更新
+      var vm = this;
+      patch(vm.$el, vnode);
+    };
+  }
+  function mountComponent(vm, el) {
+    // 更新函数 数据变化后 会再次调用此函数
+    var updateComponent = function updateComponent() {
+      //调用render函数,生成虚拟dom
+      vm._update(vm._render()); // 后续更新可以调用updateComponent方法
+      // 用虚拟dom,生成真实dom
+
+    };
+
+    updateComponent();
+  }
 
   function _typeof(obj) {
     "@babel/helpers - typeof";
@@ -470,6 +522,7 @@
       var vm = this;
       var options = vm.$options;
       el = document.querySelector(el);
+      vm.$el = el;
       console.log(el, 'el'); // 把模版转换成 对应的渲染函数 =》 虚拟dom vnode diff算法 更新虚拟dom => 真实dom
 
       if (!options.render) {
@@ -486,7 +539,58 @@
       // 调用render方法 渲染成真实dom 替换掉页面的内容
 
 
-      mountComponent(vm, el); // 组件挂载过程
+      mountComponent(vm); // 组件挂载过程
+    };
+  }
+
+  function createElement(vm, tag) {
+    var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+      children[_key - 3] = arguments[_key];
+    }
+
+    return vnode(vm, tag, data, data.key, children, undefined);
+  }
+  function createTextElement(vm, text) {
+    return vnode(vm, undefined, undefined, undefined, undefined, text);
+  }
+
+  function vnode(vm, tag, data, key, children, text) {
+    return {
+      vm: vm,
+      tag: tag,
+      data: data,
+      key: key,
+      children: children,
+      text: text
+    };
+  }
+
+  function renderMixin(Vue) {
+    Vue.prototype._c = function () {
+      //createElement
+      return createElement.apply(void 0, [this].concat(Array.prototype.slice.call(arguments)));
+    };
+
+    Vue.prototype._v = function (text) {
+      //createTextElement
+      return createTextElement(this, text);
+    };
+
+    Vue.prototype._s = function (val) {
+      // stringify
+      if (_typeof(val) === 'object') return JSON.stringify(val);
+      return val;
+    };
+
+    Vue.prototype._render = function () {
+      var vm = this;
+      var render = vm.$options.render; // 解析出来的render方法,同时也可能是用户写的
+
+      var vnode = render.call(vm);
+      console.log(vnode, 'vnode');
+      return vnode;
     };
   }
 
@@ -501,6 +605,9 @@
 
 
   initMixin(Vue);
+  renderMixin(Vue); // _render
+
+  lifecycleMixin(Vue); // _update
 
   return Vue;
 

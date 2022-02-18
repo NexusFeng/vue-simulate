@@ -1,4 +1,5 @@
 import { compileToFunction } from "./compiler/index"
+import { mountComponent } from "./lifecycle"
 import { initState } from "./state"
 
 export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
@@ -20,6 +21,7 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
     const vm = this
     const options = vm.$options
     el = document.querySelector(el)
+    vm.$el = el
     console.log(el ,'el')
 
     // 把模版转换成 对应的渲染函数 =》 虚拟dom vnode diff算法 更新虚拟dom => 真实dom

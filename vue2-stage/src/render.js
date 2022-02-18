@@ -8,7 +8,8 @@ export function renderMixin(Vue) {
     return createTextElement(this,text)
   }
   Vue.prototype._s = function(val) {// stringify
-    return JSON.stringify(val)
+    if(typeof val === 'object') return JSON.stringify(val)
+    return val
   }
 
   Vue.prototype._render = function() {
@@ -17,6 +18,7 @@ export function renderMixin(Vue) {
 
     let vnode = render.call(vm)
 
+      console.log(vnode, 'vnode')
 
     return vnode
   }
