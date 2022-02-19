@@ -60,8 +60,8 @@ export function generate(el) {// _c('div', {id: 'app'},_c('span', {}, 'world'), 
   let children = genChildren(el)
   let code = `_c('${el.tag}', ${
       el.attrs.length? genProps(el.attrs) : 'undefined' 
-    })${children? `,${children}`:'' 
-  }`
+    }${children? `,${children}`:'' 
+  })`
 
   return code
 }

@@ -1,5 +1,6 @@
 import { isObject } from "../util";
 import { arrayMethods } from "./array";
+import Dep from './dep'
 
 // 1.如果数据是对象 会将对象不停的递归 进行劫持
 // 2.如果是数组, 会劫持数组的方法 并对数组中不是基本数据类型的进行检测
@@ -38,13 +39,22 @@ class Observer{
 //vue2会对对象进行遍历,将每个属性用defineProperty重新定义,所以导致性能差
 function defineReactive(data, key, value){//value有可能是对象
   observe (value)//本身用户默认值是对象套对象,需要递归处理（性能差）
+  let dep = new Dep()//每个属性都有一个dep属性
   Object.defineProperty(data, key,{
     get() {
+      //取值时将watcher将dep关联起来
+      if(Dep.target) {//此值是在模版中取值的
+        dep.depend()//让dep记住watcher
+      }
       return value
     },
     set(newV) {
-      observe (newV)// 如果用户赋值一个新对象,需要将这个对象进行劫持
-      value = newV
+      // 更新视图
+      if (newV = value) {
+        observe (newV)// 如果用户赋值一个新对象,需要将这个对象进行劫持
+        value = newV
+        dep.notify()//告诉当前的属性存放的watcher执行
+      }
     }
   })
 }

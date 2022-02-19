@@ -18,8 +18,6 @@ export function renderMixin(Vue) {
 
     let vnode = render.call(vm)
 
-      console.log(vnode, 'vnode')
-
     return vnode
   }
 }

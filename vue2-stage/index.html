@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- 'hello'+ arr + 'world' -->
-  <div id="app" class="test"  style="border: 1px;font-size: 18px;">
+  <div id="app"  style="border: 1px;font-size: 18px;">
     hello{{name}}world
   </div>
   <script src="dist/vue.js"></script>  
@@ -39,6 +39,12 @@
 
     // 数组没有监控索引变化, 但是索引对应的内容是对象类型,需要被监控
     vm.arr[0].name
+    //  数据变化需要影响视图，数据和页面渲染关联起来
+    setTimeout(() => {
+      vm.name = 'hello'
+      // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
+    }, 2000);
+    // vm.name = 'afeng'
   </script>
 </body>
 </html>

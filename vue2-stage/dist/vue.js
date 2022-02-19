@@ -82,7 +82,7 @@
     // _c('div', {id: 'app'},_c('span', {}, 'world'), _v('hello'))
     //遍历树,将树拼接成字符串
     var children = genChildren(el);
-    var code = "_c('".concat(el.tag, "', ").concat(el.attrs.length ? genProps(el.attrs) : 'undefined', ")").concat(children ? ",".concat(children) : '');
+    var code = "_c('".concat(el.tag, "', ").concat(el.attrs.length ? genProps(el.attrs) : 'undefined').concat(children ? ",".concat(children) : '', ")");
     return code;
   }
 
@@ -251,59 +251,6 @@
   //   console.log(arr) // 1
   // }
 
-  function patch(oldVnode, vnode) {
-    if (oldVnode.nodeType === 1) {
-      console.log(oldVnode, 'oldVnode'); //用vnode生成真实dom，替换原本的dom元素
-
-      var parentElm = oldVnode.parentNode; //找到它的父亲
-
-      var elm = createElm(vnode); // 根据虚拟节点 创建元素
-
-      parentElm.insertBefore(elm, oldVnode.nextSibling);
-      parentElm.removeChild(oldVnode);
-    }
-  }
-
-  function createElm(vnode) {
-    var tag = vnode.tag;
-        vnode.data;
-        var children = vnode.children,
-        text = vnode.text;
-        vnode.vm;
-
-    if (typeof tag === 'string') {
-      // 元素
-      vnode.el = document.createElement(tag); //虚拟节点会有一个el属性,对应真实节点
-
-      children.forEach(function (child) {
-        vnode.el.appendChild(createElm(child));
-      });
-    } else {
-      vnode.el = document.createTextNode(text);
-    }
-
-    return vnode.el;
-  }
-
-  function lifecycleMixin(Vue) {
-    Vue.prototype._update = function (vnode) {
-      // 既有初始化,又有更新
-      var vm = this;
-      patch(vm.$el, vnode);
-    };
-  }
-  function mountComponent(vm, el) {
-    // 更新函数 数据变化后 会再次调用此函数
-    var updateComponent = function updateComponent() {
-      //调用render函数,生成虚拟dom
-      vm._update(vm._render()); // 后续更新可以调用updateComponent方法
-      // 用虚拟dom,生成真实dom
-
-    };
-
-    updateComponent();
-  }
-
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
@@ -337,6 +284,162 @@
       writable: false
     });
     return Constructor;
+  }
+
+  var id$1 = 0;
+
+  var Dep = /*#__PURE__*/function () {
+    //每个属性都分配一个dep，dep可以来存放watcher，watcher中还要存放dep
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.id = id$1++;
+      this.subs = []; //用来存放watcher
+    }
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        // Dep.target dep里要存放watcher ， watcher要存放dep  多对多的关系
+        if (Dep.target) {
+          Dep.target.addDep(this);
+        }
+      }
+    }, {
+      key: "addSub",
+      value: function addSub(watcher) {
+        this.subs.push(watcher);
+      }
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          return watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }();
+
+  Dep.target = null; //所有组件公用
+
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+  }
+  function popTarget() {
+    Dep.target = null;
+  }
+
+  var id = 0;
+
+  var Watcher = /*#__PURE__*/function () {
+    // vm, updateComponent, () => {回调}, true
+    function Watcher(vm, exprOrFn, cb, options) {
+      _classCallCheck(this, Watcher);
+
+      this.vm = vm;
+      this.exprOrFn = exprOrFn;
+      this.cb = cb;
+      this.options = options;
+      this.id = id++;
+      this.deps = [];
+      this.depsId = new set(); // 默认应该执行exprOrFn， render(去vm上取值)
+
+      this.getter = exprOrFn;
+      this.get(); // 默认初始化要取值
+    }
+
+    _createClass(Watcher, [{
+      key: "get",
+      value: function get() {
+        //用户更新时可以重新调用get
+        // 取值时会调defineProperty.get方法， 每个属性都可以收集自己的watcher，一个属性对应多个watcher，一个watcher可以对应多个属性
+        pushTarget(this);
+        this.getter();
+        popTarget(); // Dep.target = null, 如果Dep.target有值说明这个变量在模板中使用了
+      }
+    }, {
+      key: "addDep",
+      value: function addDep(dep) {
+        var id = dep.id;
+
+        if (this.depsId.has(id)) {
+          this.depsId.add(id);
+          this.deps.push(dep);
+          dep.addSub(this);
+        }
+      }
+    }, {
+      key: "update",
+      value: function update() {
+        this.get();
+      }
+    }]);
+
+    return Watcher;
+  }();
+
+  function patch(oldVnode, vnode) {
+    console.log(oldVnode.nodeType, 'type');
+    console.log(vnode, 'vnode2');
+
+    if (oldVnode.nodeType === 1) {
+      console.log(oldVnode, 'oldVnode'); //用vnode生成真实dom，替换原本的dom元素
+
+      var parentElm = oldVnode.parentNode; //找到它的父亲
+
+      var elm = createElm(vnode); // 根据虚拟节点 创建元素
+
+      parentElm.insertBefore(elm, oldVnode.nextSibling); // 第一次渲染删除节点，下次再使用无法获取
+
+      parentElm.removeChild(oldVnode);
+      return elm;
+    }
+  }
+
+  function createElm(vnode) {
+    var tag = vnode.tag;
+        vnode.data;
+        var children = vnode.children,
+        text = vnode.text;
+        vnode.vm;
+
+    if (typeof tag === 'string') {
+      // 元素
+      vnode.el = document.createElement(tag); //虚拟节点会有一个el属性,对应真实节点
+
+      children.forEach(function (child) {
+        vnode.el.appendChild(createElm(child));
+      });
+    } else {
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
+  function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode) {
+      // 既有初始化,又有更新
+      var vm = this;
+      vm.$el = patch(vm.$el, vnode);
+    };
+  } // 后续每个组件渲染的时候都会有一个watcher
+
+  function mountComponent(vm, el) {
+    // 更新函数 数据变化后 会再次调用此函数
+    var updateComponent = function updateComponent() {
+      //调用render函数,生成虚拟dom
+      vm._update(vm._render()); // 后续更新可以调用updateComponent方法
+      // 用虚拟dom,生成真实dom
+
+    }; //观察者模式：属性是被观察者 观察者：刷新页面 
+    // updateComponent()
+
+
+    new Watcher(vm, updateComponent, function () {// 回调
+    }, true); //true表示是一个渲染watcher 还有其他watcher
   }
 
   function isFunction(val) {
@@ -435,14 +538,26 @@
     //value有可能是对象
     observe(value); //本身用户默认值是对象套对象,需要递归处理（性能差）
 
+    var dep = new Dep(); //每个属性都有一个dep属性
+
     Object.defineProperty(data, key, {
       get: function get() {
+        //取值时将watcher将dep关联起来
+        if (Dep.target) {
+          //此值是在模版中取值的
+          dep.depend(); //让dep记住watcher
+        }
+
         return value;
       },
       set: function set(newV) {
-        observe(newV); // 如果用户赋值一个新对象,需要将这个对象进行劫持
+        // 更新视图
+        if (newV = value) {
+          observe(newV); // 如果用户赋值一个新对象,需要将这个对象进行劫持
 
-        value = newV;
+          value = newV;
+          dep.notify(); //告诉当前的属性存放的watcher执行
+        }
       }
     });
   }
@@ -589,7 +704,6 @@
       var render = vm.$options.render; // 解析出来的render方法,同时也可能是用户写的
 
       var vnode = render.call(vm);
-      console.log(vnode, 'vnode');
       return vnode;
     };
   }

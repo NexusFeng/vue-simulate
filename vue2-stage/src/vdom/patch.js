@@ -1,12 +1,16 @@
 
 export function patch(oldVnode, vnode) {
+  console.log(oldVnode.nodeType, 'type')
+  console.log(vnode, 'vnode2')
   if(oldVnode.nodeType === 1) {
     console.log(oldVnode, 'oldVnode')
     //用vnode生成真实dom，替换原本的dom元素
     const parentElm = oldVnode.parentNode //找到它的父亲
     let elm = createElm(vnode) // 根据虚拟节点 创建元素
     parentElm.insertBefore(elm, oldVnode.nextSibling)
+    // 第一次渲染删除节点，下次再使用无法获取
     parentElm.removeChild(oldVnode)
+    return elm
   }
 }
 
