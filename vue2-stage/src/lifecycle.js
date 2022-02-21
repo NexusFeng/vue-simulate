@@ -9,6 +9,9 @@ export function lifecycleMixin(Vue) {
     vm.$el = patch( vm.$el, vnode)
 
   }
+  Vue.prototype.$nextTick = function () {
+    
+  }
 }
 // 后续每个组件渲染的时候都会有一个watcher
 export function mountComponent(vm, el) {
