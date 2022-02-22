@@ -8,8 +8,12 @@
 </head>
 <body>
   <!-- 'hello'+ arr + 'world' -->
+  <!-- 当在页面中直接写fullName时，fullName不会去收集渲染watcher,因为fullName没有dep， 没有收集功能 -->
+  <!-- friends在计算属性中使用时,它会收集计算属性watcher,没有收集渲染watcher -->
+  <!-- 计算属性中的值应该记录 计算属性watcher和渲染watcher -->
+  <!-- Dep.target上赋值一个渲染watcher,又将Dep.target设置为计算属性watcher -->
   <div id="app"  style="border: 1px;font-size: 18px;">
-    hello{{name}}world{{age}}
+    hello{{name}}world{{age}}{{fullName}}
   </div>
   <script src="dist/vue.js"></script>  
 
@@ -25,12 +29,30 @@
         },
         age: [11, 12, 13],
         arr: [[1,2,3]],
-        friends: '',
+        friends: '1',
         arr: [{name: 'cj'}, {name: 'feng'}]
       },
       methods: {
         a() {
 
+        }
+      },
+      // 计算属性默认不执行
+      // 多次取值如果依赖的值不变化 就不会重新执行
+      // 依赖的值变化 需要重新执行
+
+      // dirty 表示这个值是不是脏的 默认true 取值后变为false， 依赖变化了dirty=>true
+      computed: {// 原理是Object.definePrototy => getter
+        // fullName() {
+        //   return this.name + this.friends
+        // }
+        fullName: {
+          get() {
+            return this.name + this.friends
+          },
+          set(newValue) {
+            console.log(newValue)
+          }
         }
       },
       watch: {// 用户watcher

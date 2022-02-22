@@ -9,6 +9,8 @@ class Watcher {
     this.exprOrFn = exprOrFn// exprOrFn
     this.user = !!options.user//是不是用户watcher
     this.cb = cb
+    this.dirty = options.lazy // 如果是计算属性, 那麽默认值lazy: true, dirty: true
+    this.lazy = !!options.lazy
     this.options = options
     this.id = id++
     this.deps = []
@@ -28,13 +30,13 @@ class Watcher {
       this.getter = exprOrFn
     }
     // 第一次的value
-    this.value = this.get() // 默认初始化要取值
+    this.value = this.lazy? undefined: this.get() // 默认初始化要取值
   }
 
   get() { //用户更新时可以重新调用get
     // 取值时会调defineProperty.get方法， 每个属性都可以收集自己的watcher，一个属性对应多个watcher，一个watcher可以对应多个属性
     pushTarget(this)
-    const value = this.getter()
+    const value = this.getter.call(this.vm)
     popTarget()// Dep.target = null, 如果Dep.target有值说明这个变量在模板中使用了
 
     return value
@@ -49,8 +51,13 @@ class Watcher {
   }
   update() { // vue中的更新操作是异步的
     // this.get()
-    // 每次更新时 this=> watcher
-    queueWatcher(this) //多次调用update 先将watcher缓存下来,等一会一起更新
+    if (this.lazy) {
+      this.dirty = true
+    } else {
+      // 每次更新时 this=> watcher
+      queueWatcher(this) //多次调用update 先将watcher缓存下来,等一会一起更新
+    }
+    
   }
   run() {
     let newValue = this.get()
@@ -58,6 +65,16 @@ class Watcher {
     this.value = newValue //为了保证下一次更新时 上一次的最新值时下一次的旧值
     if (this.user) {
       this.cb.call(this.vm, newValue, oldValue)
+    }
+  }
+  evaluate() {
+    this.dirty = false //false表示取过值了 
+    this.value =  this.get()//用户的getter执行
+  }
+  depend() {
+    let i = this.deps.length
+    while(i--) {
+      this.deps[i].depend()//name friends收集watcher
     }
   }
  }
