@@ -431,15 +431,37 @@
       _classCallCheck(this, Watcher);
 
       this.vm = vm;
-      this.exprOrFn = exprOrFn;
+      this.exprOrFn = exprOrFn; // exprOrFn
+
+      this.user = !!options.user; //是不是用户watcher
+
       this.cb = cb;
       this.options = options;
       this.id = id++;
       this.deps = [];
-      this.depsId = new Set(); // 默认应该执行exprOrFn， render(去vm上取值)
+      this.depsId = new Set();
 
-      this.getter = exprOrFn;
-      this.get(); // 默认初始化要取值
+      if (typeof exprOrFn == 'string') {
+        this.getter = function () {
+          //需要将表达式转成函数
+          //当数据取值时会进行依赖收集 age.n => vm['age]['n']
+          var path = exprOrFn.split('.'); // [age, n]
+
+          var obj = vm;
+
+          for (var i = 0; i < path.length; i++) {
+            obj = obj[path[i]];
+          }
+
+          return obj;
+        };
+      } else {
+        // 默认应该执行exprOrFn， render(去vm上取值)
+        this.getter = exprOrFn;
+      } // 第一次的value
+
+
+      this.value = this.get(); // 默认初始化要取值
     }
 
     _createClass(Watcher, [{
@@ -448,15 +470,17 @@
         //用户更新时可以重新调用get
         // 取值时会调defineProperty.get方法， 每个属性都可以收集自己的watcher，一个属性对应多个watcher，一个watcher可以对应多个属性
         pushTarget(this);
-        this.getter();
+        var value = this.getter();
         popTarget(); // Dep.target = null, 如果Dep.target有值说明这个变量在模板中使用了
+
+        return value;
       }
     }, {
       key: "addDep",
       value: function addDep(dep) {
         var id = dep.id;
 
-        if (this.depsId.has(id)) {
+        if (!this.depsId.has(id)) {
           this.depsId.add(id);
           this.deps.push(dep);
           dep.addSub(this);
@@ -473,7 +497,13 @@
     }, {
       key: "run",
       value: function run() {
-        this.get();
+        var newValue = this.get();
+        var oldValue = this.value;
+        this.value = newValue; //为了保证下一次更新时 上一次的最新值时下一次的旧值
+
+        if (this.user) {
+          this.cb.call(this.vm, newValue, oldValue);
+        }
       }
     }]);
 
@@ -675,7 +705,7 @@
       },
       set: function set(newV) {
         // 更新视图
-        if (newV = value) {
+        if (newV !== value) {
           observe(newV); // 如果用户赋值一个新对象,需要将这个对象进行劫持
 
           value = newV;
@@ -699,6 +729,19 @@
     return new Observer(data);
   }
 
+  function stateMixin(Vue) {
+    Vue.prototype.$watch = function (key, handler) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      options.user = true; //是一个用户写的watcher
+
+      var watcher = new Watcher(this, key, handler, options);
+
+      if (options.immediate) {
+        handler(watcher.value);
+      }
+    };
+  } // 状态初始化
+
   function initState(vm) {
     var opts = vm.$options; // if (opts.props) {
     //   initProps()
@@ -709,10 +752,12 @@
     } // if (opts.computed) {
     //   initComputed()
     // }
-    // if (opts.watch) {
-    //   initWatch()
-    // }
 
+
+    if (opts.watch) {
+      // 初始化watch
+      initWatch(vm, opts.watch);
+    }
   } // 代理
 
   function proxy(vm, source, key) {
@@ -739,6 +784,25 @@
     }
 
     observe(data);
+  }
+
+  function initWatch(vm, watch) {
+    for (var key in watch) {
+      console.log(key, watch, 'watch');
+      var handler = watch[key];
+
+      if (Array.isArray(handler)) {
+        for (var i = 0; i < handler.length; i++) {
+          createWatcher(vm, key, handler[i]);
+        }
+      } else {
+        createWatcher(vm, key, handler);
+      }
+    }
+  }
+
+  function createWatcher(vm, key, handler) {
+    return vm.$watch(key, handler);
   }
 
   function initMixin(Vue) {
@@ -845,6 +909,8 @@
   renderMixin(Vue); // _render
 
   lifecycleMixin(Vue); // _update
+
+  stateMixin(Vue);
 
   return Vue;
 

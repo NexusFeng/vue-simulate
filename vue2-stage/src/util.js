@@ -41,7 +41,6 @@ function timer(flushCallbacks) {
       setTimeout(flushCallbacks)
     }
   }
-
   timerFn()
   
 

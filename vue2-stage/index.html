@@ -27,19 +27,52 @@
         arr: [[1,2,3]],
         friends: '',
         arr: [{name: 'cj'}, {name: 'feng'}]
+      },
+      methods: {
+        a() {
+
+        }
+      },
+      watch: {// 用户watcher
+        // name(newVal, oldVal){
+        //   console.log(newVal, oldVal)
+        // },
+        // name: [
+        //   function(newVal, oldVal){
+        //     console.log(newVal, oldVal)
+        //   },
+        //   function(newVal, oldVal){
+        //     console.log(newVal, oldVal)
+        //   },
+        // ],
+        // name: {
+        //   handler() {
+
+        //   },
+        //   deep: true,
+        //   immediate: false,
+        // },
+        // name: 'a',
+        'a.a'(newVal, oldVal){
+          console.log(newVal, oldVal)
+        },
       }
     })
+    // 通过实例创建watch
+    // vm.$watch('name', function() {
+
+    // })
     // 新增的属性不能监听,只能监听已有属性
-    vm._data.a.b = 1
+    // vm._data.a.b = 1
     // 新增的属性为对象可以被监听
-    vm._data.a = {...vm._data.a, c:1}
-    vm.friends = 'bingbing'
+    // vm._data.a = {...vm._data.a, c:1}
+    // vm.friends = 'bingbing'
     console.log(vm, 'vm')
     // 用户很少通过索引操作数组 arr[82] = 1000 内部不对索引进行拦截,因为消耗严重,内部数组不采用defineProperty
     // 更改7个数组方法 push shift pop unshift reverse sort splice
 
     // 数组没有监控索引变化, 但是索引对应的内容是对象类型,需要被监控
-    vm.arr[0].name
+    // vm.arr[0].name
     //  数据变化需要影响视图，数据和页面渲染关联起来
     setTimeout(() => {
       vm.name = 'hello'

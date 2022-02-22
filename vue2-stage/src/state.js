@@ -1,6 +1,18 @@
 import { observe } from "./observer/index"
+import Watcher from "./observer/watcher"
 import { isFunction } from "./util"
 
+
+export function stateMixin(Vue) {
+  Vue.prototype.$watch = function (key, handler,options = {}) {
+    options.user = true //是一个用户写的watcher
+    let watcher = new Watcher(this, key, handler, options)
+
+    if(options.immediate) {
+      handler(watcher.value)
+    }
+  }
+}
 // 状态初始化
 export function initState(vm) {
   const opts = vm.$options
@@ -13,9 +25,9 @@ export function initState(vm) {
   // if (opts.computed) {
   //   initComputed()
   // }
-  // if (opts.watch) {
-  //   initWatch()
-  // }
+  if (opts.watch) {// 初始化watch
+    initWatch(vm, opts.watch)
+  }
 }
 
 // 代理
@@ -41,4 +53,22 @@ function initData(vm) {
   }
   
   observe(data)
+}
+
+function initWatch(vm, watch) {
+  for(let key in watch) {
+    console.log(key, watch, 'watch')
+    let handler = watch[key]
+    if (Array.isArray(handler)) {
+      for(let i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i])
+      }
+    } else {
+      createWatcher(vm, key, handler)
+    }
+  }
+}
+
+function createWatcher(vm, key, handler) {
+  return vm.$watch(key, handler)
 }
