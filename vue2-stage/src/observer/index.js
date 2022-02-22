@@ -6,8 +6,13 @@ import Dep from './dep'
 // 2.如果是数组, 会劫持数组的方法 并对数组中不是基本数据类型的进行检测
 
 //检测数据变化，类有类型,对象无类型
+
+// 如果给对象新增一个属性不会触发视图更新（给对象本身也增加一个dep，dep中存watcher，如果增加一个属性后，就手动触发watcher的更新）
 class Observer{
   constructor(data) {//对对象中的所有属性进行劫持
+
+    this.dep = new Dep()//数据可能是数组或者对象
+
     Object.defineProperty(data, '__ob__', {
       value: this,
       enumerable: false //不可枚举
@@ -24,6 +29,7 @@ class Observer{
   }
 
   observeArray(data) { //对数组中的数组和数组中的对象再次劫持
+    //如果数组里放的是对象类型，也做了观测，JSON.stringify()也做了收集依赖
     data.forEach(item => {
       observe(item)
     })
@@ -35,16 +41,31 @@ class Observer{
     })
   }
 }
+function dependArray(value) {
+  for(let i = 0; i < value.length; i++ ) {
+    let current = value[i]
+    current.__ob__ && current.__ob__.dep.depend()
+    if(Array.isArray(current)) {
+      dependArray(current)
+    }
+  }
+}
 
 //vue2会对对象进行遍历,将每个属性用defineProperty重新定义,所以导致性能差
 function defineReactive(data, key, value){//value有可能是对象
-  observe (value)//本身用户默认值是对象套对象,需要递归处理（性能差）
+  let childOb = observe (value)//本身用户默认值是对象套对象,需要递归处理（性能差）
   let dep = new Dep()//每个属性都有一个dep属性
   Object.defineProperty(data, key,{
     get() {
       //取值时将watcher将dep关联起来
       if(Dep.target) {//此值是在模版中取值的
         dep.depend()//让dep记住watcher
+        if(childOb) { //可能是数组，也可能是对象
+          childOb.dep.depend() //让数组和对象也记录watcher
+          if(Array.isArray(value)) {
+            dependArray(value)
+          }
+        }
       }
       return value
     },
@@ -66,7 +87,7 @@ export function observe (data) {
   }
   //判断data有没有被观测
   if(data.__ob__) {
-    return
+    return data.__ob__
   }
   return new Observer(data)
 }

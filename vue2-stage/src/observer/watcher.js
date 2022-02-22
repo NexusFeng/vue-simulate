@@ -11,7 +11,7 @@ class Watcher {
     this.options = options
     this.id = id++
     this.deps = []
-    this.depsId = new set()
+    this.depsId = new Set()
 
     // 默认应该执行exprOrFn， render(去vm上取值)
     this.getter = exprOrFn

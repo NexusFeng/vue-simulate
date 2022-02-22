@@ -34,7 +34,7 @@ function timer(flushCallbacks) {
     // 微任务
   } else if (setImmedidate) {
     timerFn = () => {
-      setTimeout(flushCallbacks)
+      setImmedidate(flushCallbacks)
     }
   } else {
     timerFn = () => {

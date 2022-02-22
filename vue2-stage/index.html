@@ -9,7 +9,7 @@
 <body>
   <!-- 'hello'+ arr + 'world' -->
   <div id="app"  style="border: 1px;font-size: 18px;">
-    hello{{name}}world
+    hello{{name}}world{{age}}
   </div>
   <script src="dist/vue.js"></script>  
 
@@ -24,6 +24,7 @@
           a: 1
         },
         age: [11, 12, 13],
+        arr: [[1,2,3]],
         friends: '',
         arr: [{name: 'cj'}, {name: 'feng'}]
       }
@@ -45,6 +46,10 @@
       // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
     }, 2000);
     // vm.name = 'afeng'
+    setTimeout(() => {
+      vm.age.push(444)
+      // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
+    }, 3000);
   </script>
 </body>
 </html>

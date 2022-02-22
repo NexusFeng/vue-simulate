@@ -331,6 +331,98 @@
     Dep.target = null;
   }
 
+  function isFunction(val) {
+    return typeof val === 'function';
+  }
+  function isObject(val) {
+    return _typeof(val) === 'object' && val !== null;
+  }
+  var callbacks = [];
+
+  function flushCallbacks() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    waiting = false;
+  }
+
+  var waiting = false;
+
+  function timer(flushCallbacks) {
+    var timerFn = function timerFn() {};
+
+    if (Promise) {
+      timerFn = function timerFn() {
+        Promise.resolve().then(flushCallbacks);
+      };
+    } else if (MutationObserver) {
+      var textNode = document.createTextNode(1);
+      var observe = new MutationObserver(flushCallbacks);
+      observe.observe(textNode, {
+        characterData: true
+      });
+
+      timerFn = function timerFn() {
+        textNode.textContent = 3;
+      }; // 微任务
+
+    } else if (setImmedidate) {
+      timerFn = function timerFn() {
+        setImmedidate(flushCallbacks);
+      };
+    } else {
+      timerFn = function timerFn() {
+        setTimeout(flushCallbacks);
+      };
+    }
+
+    timerFn();
+  } // 微任务是在页面渲染前执行,取得是内存中的dom，不关心是否渲染完
+
+
+  function nextTick(cb) {
+    callbacks.push(cb); // flushSchedulerQueue先执行，用户的$nextTick后执行
+
+    if (!waiting) {
+      // Promise.resolve().then(flushCallbacks)//vue2考虑兼容性问题， vue3不考虑
+      // 处理兼容性
+      timer(flushCallbacks);
+      waiting = true;
+    }
+  }
+
+  var queue = [];
+  var has = {}; //做列表 列表存放了哪些watcher
+
+  function flushSchedulerQueue() {
+    for (var i = 0; i < queue.length; i++) {
+      queue[i].run();
+    }
+
+    queue = [];
+    has = {};
+    pending = false;
+  }
+
+  var pending = false; // 等待同步代码执行完后 才执行逻辑(event loop)
+
+  function queueWatcher(watcher) {
+    // 同步代码执行完毕后先清空微任务,再清空宏任务,想尽早更新页面
+    var id = watcher.id;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true; // 开启一次更新操作 批处理（防抖）
+
+      if (!pending) {
+        // 定时器会开启新的线程
+        // setTimeout(flushSchedulerQueue, 0)
+        nextTick(flushSchedulerQueue);
+        pending = true;
+      }
+    }
+  }
+
   var id = 0;
 
   var Watcher = /*#__PURE__*/function () {
@@ -344,7 +436,7 @@
       this.options = options;
       this.id = id++;
       this.deps = [];
-      this.depsId = new set(); // 默认应该执行exprOrFn， render(去vm上取值)
+      this.depsId = new Set(); // 默认应该执行exprOrFn， render(去vm上取值)
 
       this.getter = exprOrFn;
       this.get(); // 默认初始化要取值
@@ -373,12 +465,20 @@
     }, {
       key: "update",
       value: function update() {
+        // vue中的更新操作是异步的
+        // this.get()
+        // 每次更新时 this=> watcher
+        queueWatcher(this); //多次调用update 先将watcher缓存下来,等一会一起更新
+      }
+    }, {
+      key: "run",
+      value: function run() {
         this.get();
       }
     }]);
 
     return Watcher;
-  }();
+  }(); // watcher 和dep
 
   function patch(oldVnode, vnode) {
     console.log(oldVnode.nodeType, 'type');
@@ -425,6 +525,8 @@
       var vm = this;
       vm.$el = patch(vm.$el, vnode);
     };
+
+    Vue.prototype.$nextTick = function () {};
   } // 后续每个组件渲染的时候都会有一个watcher
 
   function mountComponent(vm, el) {
@@ -442,14 +544,7 @@
     }, true); //true表示是一个渲染watcher 还有其他watcher
   }
 
-  function isFunction(val) {
-    return typeof val === 'function';
-  }
-  function isObject(val) {
-    return _typeof(val) === 'object' && val !== null;
-  }
-
-  var oldArrayPrototype = Array.prototype; // 继承数组方法
+  var oldArrayPrototype = Array.prototype; // 继承数组方法（保留原有数组功能）
 
   var arrayMethods = Object.create(oldArrayPrototype); // arrayMethods.__proto__ = Array.prototype 
   //只有这7个可以改变原数组
@@ -458,14 +553,14 @@
   methods.forEach(function (method) {
     // 用户调用的如果是以上七个方法,会用重写的,负责调用原来的数组方法
     arrayMethods[method] = function () {
-      var _oldArrayPrototypep$m;
+      var _oldArrayPrototype$me;
 
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
 
       // 此处this是数组
-      (_oldArrayPrototypep$m = oldArrayPrototypep[method]).call.apply(_oldArrayPrototypep$m, [this].concat(args));
+      (_oldArrayPrototype$me = oldArrayPrototype[method]).call.apply(_oldArrayPrototype$me, [this].concat(args));
 
       var inserted;
       var ob = this.__ob__; //根据当前数组获取observe实例
@@ -483,19 +578,26 @@
       } // 如果有新增的内容要继续劫持 需要观测数组每一项,而不是数组
 
 
-      if (inserted) ob.observeArray(inserted); // arr.push({a:1}, {b:2})
+      if (inserted) ob.observeArray(inserted); // 数组的observer.dep属性
+
+      ob.dep.notify(); // arr.push({a:1}, {b:2})
       // arr.splice(0, 1, xxxx)
     };
-  });
+  }); // vue中的嵌套数据不能太深
+  // vue中对象通过的是defineProperty实现的响应式,拦截了get和set,如果不存在的属性不会拦截，也不会响应。可以使用$set =>让对象自己去notify，或者赋一个新对象
+  // vue中的数组改索引和长度,是不会影响更新的,通过变异方法更新视图，7个方法，数组中如果修改对象类型,修改对象也可以更新视图
 
   // 2.如果是数组, 会劫持数组的方法 并对数组中不是基本数据类型的进行检测
   //检测数据变化，类有类型,对象无类型
+  // 如果给对象新增一个属性不会触发视图更新（给对象本身也增加一个dep，dep中存watcher，如果增加一个属性后，就手动触发watcher的更新）
 
   var Observer = /*#__PURE__*/function () {
     function Observer(data) {
       _classCallCheck(this, Observer);
 
       //对对象中的所有属性进行劫持
+      this.dep = new Dep(); //数据可能是数组或者对象
+
       Object.defineProperty(data, '__ob__', {
         value: this,
         enumerable: false //不可枚举
@@ -516,6 +618,7 @@
       key: "observeArray",
       value: function observeArray(data) {
         //对数组中的数组和数组中的对象再次劫持
+        //如果数组里放的是对象类型，也做了观测，JSON.stringify()也做了收集依赖
         data.forEach(function (item) {
           observe(item);
         });
@@ -531,12 +634,23 @@
     }]);
 
     return Observer;
-  }(); //vue2会对对象进行遍历,将每个属性用defineProperty重新定义,所以导致性能差
+  }();
+
+  function dependArray(value) {
+    for (var i = 0; i < value.length; i++) {
+      var current = value[i];
+      current.__ob__ && current.__ob__.dep.depend();
+
+      if (Array.isArray(current)) {
+        dependArray(current);
+      }
+    }
+  } //vue2会对对象进行遍历,将每个属性用defineProperty重新定义,所以导致性能差
 
 
   function defineReactive(data, key, value) {
     //value有可能是对象
-    observe(value); //本身用户默认值是对象套对象,需要递归处理（性能差）
+    var childOb = observe(value); //本身用户默认值是对象套对象,需要递归处理（性能差）
 
     var dep = new Dep(); //每个属性都有一个dep属性
 
@@ -546,6 +660,15 @@
         if (Dep.target) {
           //此值是在模版中取值的
           dep.depend(); //让dep记住watcher
+
+          if (childOb) {
+            //可能是数组，也可能是对象
+            childOb.dep.depend(); //让数组和对象也记录watcher
+
+            if (Array.isArray(value)) {
+              dependArray(value);
+            }
+          }
         }
 
         return value;
@@ -570,7 +693,7 @@
 
 
     if (data.__ob__) {
-      return;
+      return data.__ob__;
     }
 
     return new Observer(data);
