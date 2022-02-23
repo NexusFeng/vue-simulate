@@ -22,10 +22,20 @@ export function mountComponent(vm, el) {
     vm._update(vm._render()) // 后续更新可以调用updateComponent方法
     // 用虚拟dom,生成真实dom
   }
+  callHook(vm, 'beforeMount')
   //观察者模式：属性是被观察者 观察者：刷新页面 
   // updateComponent()
   new Watcher(vm, updateComponent, () => {
     // 回调
   }, true)//true表示是一个渲染watcher 还有其他watcher
 
+}
+
+export function callHook(vm, hook) {
+  let handlers = vm.$options[hook]
+  if(handlers) {
+    for(let i = 0; i < handlers.length; i++) {
+      handlers[i].call(vm)
+    }
+  }
 }

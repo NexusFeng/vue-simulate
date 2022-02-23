@@ -1,6 +1,6 @@
 //用class类写vue不好拆封,所以采用构造函数方式写
 
-import { initGlobalApi } from './alobal-api/index'
+import { initGlobalApi } from './global-api/index'
 import { initMixin } from './init'
 import { lifecycleMixin } from './lifecycle'
 import { renderMixin } from './render'

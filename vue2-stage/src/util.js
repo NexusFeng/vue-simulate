@@ -93,8 +93,14 @@ strats.data = function () {
 
 }
 
-strats.components = function () {
-
+strats.components = function (parentVal, childVal) {
+  let options = Object.create(parentVal) //根据父对象构造一个新对象 options.__proto__
+  if(childVal) {
+    for(let key in childVal) {
+      options[key] = childVal[key]
+    }
+  }
+  return options
 }
 
 
