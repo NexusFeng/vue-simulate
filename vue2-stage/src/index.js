@@ -1,5 +1,6 @@
 //用class类写vue不好拆封,所以采用构造函数方式写
 
+import { initGlobalApi } from './alobal-api/index'
 import { initMixin } from './init'
 import { lifecycleMixin } from './lifecycle'
 import { renderMixin } from './render'
@@ -15,5 +16,9 @@ initMixin(Vue)
 renderMixin(Vue) // _render
 lifecycleMixin(Vue) // _update
 stateMixin(Vue)
+
+
+// 在类上扩展
+initGlobalApi(Vue) //初始化全局api
 
 export default Vue

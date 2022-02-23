@@ -97,12 +97,12 @@
     // vm.arr[0].name
     //  数据变化需要影响视图，数据和页面渲染关联起来
     setTimeout(() => {
-      vm.name = 'hello'
+      // vm.name = 'hello'
       // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
     }, 2000);
     // vm.name = 'afeng'
     setTimeout(() => {
-      vm.age.push(444)
+      // vm.age.push(444)
       // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
     }, 3000);
   </script>
