@@ -33,9 +33,10 @@ export function initMixin(Vue) { //表示在vue的基础上做一次混合操作
       let template = options.template
       if(!template && el) {// 没有template就取el的内容作为模板
         template = el.outerHTML
-        let render = compileToFunction(template)
-        options.render = render
+        
       }
+      let render = compileToFunction(template)
+      options.render = render
     }
     // options.render就是渲染函数
     // 调用render方法 渲染成真实dom 替换掉页面的内容

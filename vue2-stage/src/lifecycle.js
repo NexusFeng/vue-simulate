@@ -28,6 +28,7 @@ export function mountComponent(vm, el) {
   new Watcher(vm, updateComponent, () => {
     // 回调
   }, true)//true表示是一个渲染watcher 还有其他watcher
+  callHook(vm, 'mounted')
 
 }
 

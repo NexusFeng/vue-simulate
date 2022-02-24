@@ -13,7 +13,14 @@ var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'
 // 匹配大括号 {{}}
 var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;// {{aaaa}}
 
-//将解析后的结果 组装成一个树结构 ast树 栈
+
+
+// ast (语法层面的描述 js css html) vdom （dom节点）
+// html字符串解析成dom树 解析成对应的脚本  <div id = 'app'> {{name}} </div>
+
+export function parserHTML(html) { // <div id="app">111</div>
+  
+  //将解析后的结果 组装成一个树结构 ast树 栈
 
 function createAstElement(tagName, attrs) {
   return {
@@ -59,12 +66,6 @@ function chars(text) {
   }
 
 }
-
-// ast (语法层面的描述 js css html) vdom （dom节点）
-// html字符串解析成dom树 解析成对应的脚本  <div id = 'app'> {{name}} </div>
-
-export function parserHTML(html) { // <div id="app">111</div>
-  
 
   function advance(len){
     html = html.substring(len)
