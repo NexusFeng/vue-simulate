@@ -28,6 +28,7 @@ let oldTemplate = `<div>{{message}}</div>`
 
 let vm1 = new Vue({data: {message: 'hello'}})
 const render1 = compileToFunction(oldTemplate)
+console.log(render1, 'render1')
 const oldVnode = render1.call(vm1) //虚拟dom
 console.log(createElm(oldVnode))
 
@@ -38,7 +39,7 @@ const newVnode = render2.call(vm2) //虚拟dom
 console.log(createElm(newVnode))
 // 根据新的虚拟节点更新老的节点，老的节点能复用就复用
 
-patch(oldVnode, newVnode)
+// patch(oldVnode, newVnode)
 
 
 export default Vue

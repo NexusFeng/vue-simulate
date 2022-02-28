@@ -19,12 +19,12 @@
   <!-- friends在计算属性中使用时,它会收集计算属性watcher,没有收集渲染watcher -->
   <!-- 计算属性中的值应该记录 计算属性watcher和渲染watcher -->
   <!-- Dep.target上赋值一个渲染watcher,又将Dep.target设置为计算属性watcher -->
-  <div id="app"  style="border: 1px;font-size: 18px;">
+  <!-- <div id="app"  style="border: 1px;font-size: 18px;">
     hello{{name}}world{{age}}{{fullName}}
-  </div>
+  </div> -->
   <script src="dist/vue.js"></script>  
 
-  <script>
+  <!-- <script>
     // viewModel 数据模型
     // 典型的MVVM  view vm  model
     let vm = new Vue({
@@ -112,6 +112,6 @@
       // vm.age.push(444)
       // vm._update(vm._render()) // 重新调用render方法产生虚拟dom,暂时没有diff算法
     }, 3000);
-  </script>
+  </script> -->
 </body>
 </html>

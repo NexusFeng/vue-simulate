@@ -96,7 +96,7 @@ function createComponent(vnode) {
 }
 
 //创建真实节点
-function createElm(vnode) {
+export function createElm(vnode) {
   let {tag, data, children, text, vm} = vnode
   if(typeof tag === 'string') { // 元素
 

@@ -89,9 +89,9 @@ lifecycleHooks.forEach(hook => {
   strats[hook] = mergeHook
 })
 
-strats.data = function () {
+// strats.data = function () {
 
-}
+// }
 
 strats.components = function (parentVal, childVal) {
   let options = Object.create(parentVal) //根据父对象构造一个新对象 options.__proto__
@@ -107,6 +107,7 @@ strats.components = function (parentVal, childVal) {
 
 
 export function mergeOptions(parent, child) {
+  console.log(parent, child, 'sss')
   const options = {} //合并后的结果
   for(let key in parent) {
     mergeField(key)
@@ -132,7 +133,7 @@ export function mergeOptions(parent, child) {
       }
     }
   } 
-
+console.log(options, 'options')
   return options
 }
 
