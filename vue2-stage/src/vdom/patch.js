@@ -1,11 +1,9 @@
 
 export function patch(oldVnode, vnode) {
-  console.log(oldVnode, vnode, '1525')
   if (!oldVnode) {
     return createElm(vnode) // 如果没有el元素，那就直接根据虚拟节点返回真实节点
   }
   if(oldVnode.nodeType == 1) {
-    console.log(oldVnode, 'oldVnode')
     //用vnode生成真实dom，替换原本的dom元素
     const parentElm = oldVnode.parentNode //找到它的父亲
     let elm = createElm(vnode) // 根据虚拟节点 创建元素
@@ -15,7 +13,6 @@ export function patch(oldVnode, vnode) {
     return elm
   } else {
     // 如果标签名称不一样 直接删掉老的换成新的即可
-    console.log(oldVnode, 'oldVode')
     if(oldVnode.tag !== vnode.tag) {
       // 可以通过vnode.el属性获取现在的真实dom
       return oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el)
@@ -57,6 +54,10 @@ export function patch(oldVnode, vnode) {
   }
 }
 
+function isSameVnode(oldVnode, newVnode) {
+  return (oldVnode.tag == newVnode.tag) && (oldVnode.key == newVnode.key)
+}
+
 function patchChildren (el, oldChildren, newChildren) {
 
   let oldStartIndex = 0
@@ -67,9 +68,35 @@ function patchChildren (el, oldChildren, newChildren) {
   let newStartIndex = 0
   let newStartVnode = newChildren[0]
   let newEndIndex = newChildren.length - 1
-  let newEndVode = new[newEndIndex]
+  let newEndVode = newChildren[newEndIndex]
 
+  while(oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+    // 同时循环新的节点和老的节点，有一方循环完毕就结束了
+    if(isSameVnode(oldStartVnode, newStartVnode)) { //头头比较，标签一致，
+      patch(oldStartVnode, newStartVnode)
+      oldStartVnode = oldChildren[++oldStartIndex]
+      newStartVnode = newChildren[++newStartIndex]
+    } else if(isSameVnode(oldEndVode, newEndVode)) {
+      patch(oldStartVnode, newStartVnode)
+      oldEndVnode = oldChildren[--oldEndIndex]
+      newEndVnode = newChildren[--newEndIndex]
+    }
+  }
+  
+  // 用户追加一个元素
 
+  // 尾部追加
+  if (newStartIndex <= newEndIndex) {
+    for(let i = newStartIndex; i <= newEndIndex; i++) {
+      // el.appendChild(createElm(newChildren[i]))
+      // insertBefore方法可以实现appendChild功能
+
+      // 判断尾指针的下一个元素是否存在
+      let anchor = newChildren[newEndIndex + 1] == null? null : newChildren[newEndIndex + 1].el
+      // node.insertBefore(newnode,existingnode) newnode:必需。需要插入的节点对象。existingnode 可选。在其之前插入新节点的子节点。如果未规定，则 insertBefore 方法会在结尾插入 newnode。
+      el.insertBefore(createElm(newChildren[i]),anchor)
+    }
+  }
 
 }
 
@@ -119,7 +146,6 @@ function createComponent(vnode) {
 
 //创建真实节点
 export function createElm(vnode) {
-  console.log(vnode, 'nnode')
   let {tag, data, children, text, vm} = vnode
   if(typeof tag === 'string') { // 元素
 

@@ -1,17 +1,17 @@
 // 标签名
-var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z]*";
+const ncname = `[a-zA-Z_][\\-\\.0-9_a-zA-Z]*`;
 // 获取标签名 match后的索引为1的
-var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
+const qnameCapture = `((?:${ncname}\\:)?${ncname})`;
 // 匹配开始标签
-var startTagOpen = new RegExp(("^<" + qnameCapture));
+const startTagOpen = new RegExp(`^<${qnameCapture}`);
 // 匹配标签的关闭 <div/>
-var startTagClose = /^\s*(\/?)>/;
+const startTagClose = /^\s*(\/?)>/;
 // 匹配闭合标签
-var endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>"));
+const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`);
 // 匹配属性 aa = "xxx" | 'xxx' | xxx  a=b a="b" a ='b'
-var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
 // 匹配大括号 {{}}
-var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;// {{aaaa}}
+const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;// {{aaaa}}
 
 
 
@@ -22,50 +22,50 @@ export function parserHTML(html) { // <div id="app">111</div>
   
   //将解析后的结果 组装成一个树结构 ast树 栈
 
-function createAstElement(tagName, attrs) {
-  return {
-    tag: tagName,
-    type: 1,
-    children: [],
-    parent: null,
-    attrs
-  }
-} 
+  function createAstElement(tagName, attrs) {
+    return {
+      tag: tagName,
+      type: 1,
+      children: [],
+      parent: null,
+      attrs
+    }
+  } 
 
-let root = null
-let stack = []
-function start (tagName, attributes) {
-  let parent = stack[stack.length - 1]
-  let element = createAstElement(tagName, attributes)
-  if (!root) {
-    root = element
-  }
-  
-  if (parent) {
-    element.parent = parent //当放入栈中时,记录父亲是谁
-    element.children.push(element)
-  }
-  stack.push(element)
-}
+  let root = null
+  let stack = []
+  function start (tagName, attributes) {
+    let parent = stack[stack.length - 1]
+    let element = createAstElement(tagName, attributes)
+    if (!root) {
+      root = element
+    }
 
-function end (tagName) {
-  let last = stack.pop()
-  if (last.tag !== tagName) {
-    throw new Error('标签有误')
-  }
-}
-
-function chars(text) {
-  text = text.replace(/\s/g, "")
-  let parent = stack[stack.length - 1]
-  if (text) {
-    parent.children.push({
-      type: 3,
-      text
-    })
+    if (parent) {
+      element.parent = parent //当放入栈中时,记录父亲是谁
+      parent.children.push(element)
+    }
+    stack.push(element)
   }
 
-}
+  function end (tagName) {
+    let last = stack.pop()
+    if (last.tag !== tagName) {
+      throw new Error('标签有误')
+    }
+  }
+
+  function chars(text) {
+    text = text.replace(/\s/g, "")
+    let parent = stack[stack.length - 1]
+    if (text) {
+      parent.children.push({
+        type: 3,
+        text
+      })
+    }
+
+  }
 
   function advance(len){
     html = html.substring(len)

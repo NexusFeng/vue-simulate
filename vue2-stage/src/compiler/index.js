@@ -6,6 +6,7 @@ export function compileToFunction(template) {
   
   let root = parserHTML(template)
   //生成代码
+  console.log(root, 'root')
   let code = generate(root)
   console.log(code, 'code')
   let render = new Function(`with(this){return ${code}}`) //code中会用到数据,数据在vm上

@@ -289,7 +289,7 @@
       var text = el.text;
 
       if (!defaultTagRE.test(text)) {
-        return "_v(".concat(text, ")");
+        return "_v('".concat(text, "')");
       } else {
         // 'hello'+ arr + 'world'   hello {{arr}} world
         var tokens = [];
@@ -339,13 +339,13 @@
   // 标签名
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z]*"; // 获取标签名 match后的索引为1的
 
-  var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")"; // 匹配开始标签
+  var qnameCapture = "((?:".concat(ncname, "\\:)?").concat(ncname, ")"); // 匹配开始标签
 
-  var startTagOpen = new RegExp("^<" + qnameCapture); // 匹配标签的关闭 <div/>
+  var startTagOpen = new RegExp("^<".concat(qnameCapture)); // 匹配标签的关闭 <div/>
 
   var startTagClose = /^\s*(\/?)>/; // 匹配闭合标签
 
-  var endTag = new RegExp("^<\\/" + qnameCapture + "[^>]*>"); // 匹配属性 aa = "xxx" | 'xxx' | xxx  a=b a="b" a ='b'
+  var endTag = new RegExp("^<\\/".concat(qnameCapture, "[^>]*>")); // 匹配属性 aa = "xxx" | 'xxx' | xxx  a=b a="b" a ='b'
 
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配大括号 {{}}
   // ast (语法层面的描述 js css html) vdom （dom节点）
@@ -378,7 +378,7 @@
       if (parent) {
         element.parent = parent; //当放入栈中时,记录父亲是谁
 
-        element.children.push(element);
+        parent.children.push(element);
       }
 
       stack.push(element);
@@ -485,6 +485,7 @@
   function compileToFunction(template) {
     var root = parserHTML(template); //生成代码
 
+    console.log(root, 'root');
     var code = generate(root);
     console.log(code, 'code');
     var render = new Function("with(this){return ".concat(code, "}")); //code中会用到数据,数据在vm上
@@ -692,15 +693,12 @@
   }(); // watcher 和dep
 
   function patch(oldVnode, vnode) {
-    console.log(oldVnode, vnode, '1525');
-
     if (!oldVnode) {
       return createElm(vnode); // 如果没有el元素，那就直接根据虚拟节点返回真实节点
     }
 
     if (oldVnode.nodeType == 1) {
-      console.log(oldVnode, 'oldVnode'); //用vnode生成真实dom，替换原本的dom元素
-
+      //用vnode生成真实dom，替换原本的dom元素
       var parentElm = oldVnode.parentNode; //找到它的父亲
 
       var elm = createElm(vnode); // 根据虚拟节点 创建元素
@@ -711,8 +709,6 @@
       return elm;
     } else {
       // 如果标签名称不一样 直接删掉老的换成新的即可
-      console.log(oldVnode, 'oldVode');
-
       if (oldVnode.tag !== vnode.tag) {
         // 可以通过vnode.el属性获取现在的真实dom
         return oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el);
@@ -755,13 +751,46 @@
     }
   }
 
+  function isSameVnode(oldVnode, newVnode) {
+    return oldVnode.tag == newVnode.tag && oldVnode.key == newVnode.key;
+  }
+
   function patchChildren(el, oldChildren, newChildren) {
-    oldChildren[0];
+    var oldStartIndex = 0;
+    var oldStartVnode = oldChildren[0];
     var oldEndIndex = oldChildren.length - 1;
-    oldChildren[oldEndIndex];
-    newChildren[0];
+    var oldEndVode = oldChildren[oldEndIndex];
+    var newStartIndex = 0;
+    var newStartVnode = newChildren[0];
     var newEndIndex = newChildren.length - 1;
-    new [newEndIndex]();
+    var newEndVode = newChildren[newEndIndex];
+
+    while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+      // 同时循环新的节点和老的节点，有一方循环完毕就结束了
+      if (isSameVnode(oldStartVnode, newStartVnode)) {
+        //头头比较，标签一致，
+        patch(oldStartVnode, newStartVnode);
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      } else if (isSameVnode(oldEndVode, newEndVode)) {
+        patch(oldStartVnode, newStartVnode);
+        oldEndVnode = oldChildren[--oldEndIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      }
+    } // 用户追加一个元素
+    // 尾部追加
+
+
+    if (newStartIndex <= newEndIndex) {
+      for (var i = newStartIndex; i <= newEndIndex; i++) {
+        // el.appendChild(createElm(newChildren[i]))
+        // insertBefore方法可以实现appendChild功能
+        // 判断尾指针的下一个元素是否存在
+        var anchor = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el; // node.insertBefore(newnode,existingnode) newnode:必需。需要插入的节点对象。existingnode 可选。在其之前插入新节点的子节点。如果未规定，则 insertBefore 方法会在结尾插入 newnode。
+
+        el.insertBefore(createElm(newChildren[i]), anchor);
+      }
+    }
   } // 创建真实节点
 
 
@@ -814,7 +843,6 @@
 
 
   function createElm(vnode) {
-    console.log(vnode, 'nnode');
     var tag = vnode.tag;
         vnode.data;
         var children = vnode.children,
@@ -1307,7 +1335,7 @@
 
   initGlobalApi(Vue); //初始化全局api
 
-  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\">\n  <li>A</li>\n  <li a = \"1\">B</li>\n  <li>C</li>\n  <li>D</li>\n</div>";
+  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\"><li>A</li><li a = \"1\">B</li><li>C</li><li>D</li></div>";
   var vm1 = new Vue({
     data: {
       message: 'hello'
@@ -1317,7 +1345,7 @@
   var oldVnode = render1.call(vm1); //虚拟dom
 
   document.body.appendChild(createElm(oldVnode));
-  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\">\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</div>";
+  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\"><li>A</li><li>B</li><li>C</li><li>D</li><li>E</li></div>";
   var vm2 = new Vue({
     data: {
       message: 'hello1'
