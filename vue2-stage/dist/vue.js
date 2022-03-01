@@ -174,7 +174,6 @@
   };
 
   function mergeOptions(parent, child) {
-    console.log(parent, child, 'sss');
     var options = {}; //合并后的结果
 
     for (var key in parent) {
@@ -205,7 +204,6 @@
       }
     }
 
-    console.log(options, 'options');
     return options;
   }
   function isReservedTag(str) {
@@ -694,11 +692,13 @@
   }(); // watcher 和dep
 
   function patch(oldVnode, vnode) {
+    console.log(oldVnode, vnode, '1525');
+
     if (!oldVnode) {
       return createElm(vnode); // 如果没有el元素，那就直接根据虚拟节点返回真实节点
     }
 
-    if (oldVnode.nodeType === 1) {
+    if (oldVnode.nodeType == 1) {
       console.log(oldVnode, 'oldVnode'); //用vnode生成真实dom，替换原本的dom元素
 
       var parentElm = oldVnode.parentNode; //找到它的父亲
@@ -711,6 +711,8 @@
       return elm;
     } else {
       // 如果标签名称不一样 直接删掉老的换成新的即可
+      console.log(oldVnode, 'oldVode');
+
       if (oldVnode.tag !== vnode.tag) {
         // 可以通过vnode.el属性获取现在的真实dom
         return oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el);
@@ -735,7 +737,11 @@
       var oldChildren = oldVnode.children || [];
       var newChildren = vnode.children || [];
 
-      if (oldChildren.length > 0 && newChildren.length > 0) ; else if (newChildren.length > 0) {
+      if (oldChildren.length > 0 && newChildren.length > 0) {
+        // 双方都有儿子
+        // vue用了双指针方法比对 同层比对
+        patchChildren(el, oldChildren, newChildren);
+      } else if (newChildren.length > 0) {
         // 老的没儿子,但是新的有儿子
         for (var i = 0; i < newChildren.length; i++) {
           var child = createElm(newChildren[i]);
@@ -747,7 +753,17 @@
       } // vue的特点是每个组件都有一个watcher，当前数组中的数据变化 只需要更新当前组件
 
     }
+  }
+
+  function patchChildren(el, oldChildren, newChildren) {
+    oldChildren[0];
+    var oldEndIndex = oldChildren.length - 1;
+    oldChildren[oldEndIndex];
+    newChildren[0];
+    var newEndIndex = newChildren.length - 1;
+    new [newEndIndex]();
   } // 创建真实节点
+
 
   function patchProps(vnode) {
     var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -798,6 +814,7 @@
 
 
   function createElm(vnode) {
+    console.log(vnode, 'nnode');
     var tag = vnode.tag;
         vnode.data;
         var children = vnode.children,
@@ -828,6 +845,7 @@
     Vue.prototype._update = function (vnode) {
       // 既有初始化,又有更新
       var vm = this;
+      console.log(vm.$el, vnode, '12');
       vm.$el = patch(vm.$el, vnode);
     };
 
@@ -1289,27 +1307,29 @@
 
   initGlobalApi(Vue); //初始化全局api
 
-  var oldTemplate = "<div>{{message}}</div>";
+  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\">\n  <li>A</li>\n  <li a = \"1\">B</li>\n  <li>C</li>\n  <li>D</li>\n</div>";
   var vm1 = new Vue({
     data: {
       message: 'hello'
     }
   });
   var render1 = compileToFunction(oldTemplate);
-  console.log(render1, 'render1');
   var oldVnode = render1.call(vm1); //虚拟dom
 
-  console.log(createElm(oldVnode));
-  var newTemplate = "<p>{{message}}</p>";
+  document.body.appendChild(createElm(oldVnode));
+  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\">\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</div>";
   var vm2 = new Vue({
     data: {
-      message: 'hello'
+      message: 'hello1'
     }
   });
   var render2 = compileToFunction(newTemplate);
   var newVnode = render2.call(vm2); //虚拟dom
+  // 根据新的虚拟节点更新老的节点，老的节点能复用就复用
 
-  console.log(createElm(newVnode)); // 根据新的虚拟节点更新老的节点，老的节点能复用就复用
+  setTimeout(function () {
+    patch(oldVnode, newVnode);
+  }, 2000);
 
   return Vue;
 

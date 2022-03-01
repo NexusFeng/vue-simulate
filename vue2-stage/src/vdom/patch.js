@@ -1,9 +1,10 @@
 
 export function patch(oldVnode, vnode) {
+  console.log(oldVnode, vnode, '1525')
   if (!oldVnode) {
     return createElm(vnode) // 如果没有el元素，那就直接根据虚拟节点返回真实节点
   }
-  if(oldVnode.nodeType === 1) {
+  if(oldVnode.nodeType == 1) {
     console.log(oldVnode, 'oldVnode')
     //用vnode生成真实dom，替换原本的dom元素
     const parentElm = oldVnode.parentNode //找到它的父亲
@@ -14,6 +15,7 @@ export function patch(oldVnode, vnode) {
     return elm
   } else {
     // 如果标签名称不一样 直接删掉老的换成新的即可
+    console.log(oldVnode, 'oldVode')
     if(oldVnode.tag !== vnode.tag) {
       // 可以通过vnode.el属性获取现在的真实dom
       return oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el)
@@ -38,6 +40,10 @@ export function patch(oldVnode, vnode) {
     let newChildren = vnode.children || []
     if(oldChildren.length > 0 && newChildren.length > 0) {
       // 双方都有儿子
+      // vue用了双指针方法比对 同层比对
+      patchChildren(el, oldChildren, newChildren)
+
+
     } else if (newChildren.length > 0) { // 老的没儿子,但是新的有儿子
       for (let i = 0; i < newChildren.length; i++) {
         let child = createElm(newChildren[i])
@@ -49,6 +55,22 @@ export function patch(oldVnode, vnode) {
     // vue的特点是每个组件都有一个watcher，当前数组中的数据变化 只需要更新当前组件
     
   }
+}
+
+function patchChildren (el, oldChildren, newChildren) {
+
+  let oldStartIndex = 0
+  let oldStartVnode = oldChildren[0]
+  let oldEndIndex = oldChildren.length - 1
+  let oldEndVode = oldChildren[oldEndIndex]
+
+  let newStartIndex = 0
+  let newStartVnode = newChildren[0]
+  let newEndIndex = newChildren.length - 1
+  let newEndVode = new[newEndIndex]
+
+
+
 }
 
 // 创建真实节点
@@ -97,6 +119,7 @@ function createComponent(vnode) {
 
 //创建真实节点
 export function createElm(vnode) {
+  console.log(vnode, 'nnode')
   let {tag, data, children, text, vm} = vnode
   if(typeof tag === 'string') { // 元素
 

@@ -6,6 +6,7 @@ export function lifecycleMixin(Vue) {
   Vue.prototype._update = function(vnode) {
     // 既有初始化,又有更新
     const vm = this
+    console.log(vm.$el, vnode, '12')
     vm.$el = patch( vm.$el, vnode)
 
   }

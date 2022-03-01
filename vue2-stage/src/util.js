@@ -107,7 +107,6 @@ strats.components = function (parentVal, childVal) {
 
 
 export function mergeOptions(parent, child) {
-  console.log(parent, child, 'sss')
   const options = {} //合并后的结果
   for(let key in parent) {
     mergeField(key)
@@ -133,7 +132,6 @@ export function mergeOptions(parent, child) {
       }
     }
   } 
-console.log(options, 'options')
   return options
 }
 
