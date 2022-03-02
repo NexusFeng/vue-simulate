@@ -753,29 +753,85 @@
 
   function isSameVnode(oldVnode, newVnode) {
     return oldVnode.tag == newVnode.tag && oldVnode.key == newVnode.key;
-  }
+  } //dom的生成 ast => render方法 => 虚拟节点 => 真实dom
+  //更新时需要重新创建ast语法树吗？
+  //如果动态添加了节点(绕过vue添加的vue监控不到)
+  // 后续数据遍历,只会操作自己管理的dom元素
+  //如果直接操作dom和vue无关,不需要重新创建ast语法树 ast语法树只创建了一次
+
 
   function patchChildren(el, oldChildren, newChildren) {
     var oldStartIndex = 0;
     var oldStartVnode = oldChildren[0];
     var oldEndIndex = oldChildren.length - 1;
-    var oldEndVode = oldChildren[oldEndIndex];
+    var oldEndVnode = oldChildren[oldEndIndex];
     var newStartIndex = 0;
     var newStartVnode = newChildren[0];
     var newEndIndex = newChildren.length - 1;
-    var newEndVode = newChildren[newEndIndex];
+    var newEndVnode = newChildren[newEndIndex]; //做映射表
+
+    var makeIndexByKey = function makeIndexByKey(children) {
+      return children.reduce(function (memo, current, index) {
+        if (current.key) {
+          memo[current.key] = index;
+        }
+
+        return memo;
+      }, {});
+    };
+
+    var keysMap = makeIndexByKey(oldChildren);
 
     while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
-      // 同时循环新的节点和老的节点，有一方循环完毕就结束了
+      // 头头比较 尾尾比较 头尾比较 尾头比较
+      // 优化了 向后添加 向前添加 尾部移动到头部 头部移动到尾部 反转
+      if (!oldStartVnode) {
+        // 已经被移走了
+        oldStartVnode = oldChildren[++oldStartIndex];
+      } else if (!oldEndVnode) {
+        oldEndVnode = oldChildren[--oldEndIndex];
+      } // 同时循环新的节点和老的节点，有一方循环完毕就结束了
+
+
       if (isSameVnode(oldStartVnode, newStartVnode)) {
         //头头比较，标签一致，
         patch(oldStartVnode, newStartVnode);
         oldStartVnode = oldChildren[++oldStartIndex];
         newStartVnode = newChildren[++newStartIndex];
-      } else if (isSameVnode(oldEndVode, newEndVode)) {
+      } else if (isSameVnode(oldEndVnode, newEndVnode)) {
+        // 从尾部开始比较
         patch(oldStartVnode, newStartVnode);
         oldEndVnode = oldChildren[--oldEndIndex];
         newEndVnode = newChildren[--newEndIndex];
+      } // 头尾比较=> reverse
+      else if (isSameVnode(oldStartVnode, newEndVnode)) {
+        patch(oldStartVnode, newEndVnode);
+        el.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling); // 移动老的元素，老的元素就会被移走不用删除
+
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      } // 尾头比较
+      else if (isSameVnode(oldEndVnode, newStartVnode)) {
+        patch(oldEndVnode, newStartVnode);
+        el.insertBefore(oldEndVnode.el, oldStartVnode.el);
+        oldEndVnode = oldChildren[--oldEndIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      } else {
+        //乱序比对  核心diff
+        // 1.需要根据key和对应的索引将老的内容生成映射表
+        var moveIndex = keysMap[newStartVnode.key];
+
+        if (moveIndex == undefined) {
+          // 如果不能复用直接创建新的插入到老的节点开头处
+          el.insertBefore(createElm(newStartVnode), oldStartVnode.el);
+        } else {
+          var moveNode = oldChildren[moveIndex];
+          oldChildren[moveIndex] = null;
+          el.insertBefore(moveNode.el, oldStartVnode.el);
+          patch(moveNode, newStartVnode); //比较两个节点的属性
+        }
+
+        newStartVnode = newChildren[++newStartIndex];
       }
     } // 用户追加一个元素
     // 尾部追加
@@ -789,6 +845,13 @@
         var anchor = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el; // node.insertBefore(newnode,existingnode) newnode:必需。需要插入的节点对象。existingnode 可选。在其之前插入新节点的子节点。如果未规定，则 insertBefore 方法会在结尾插入 newnode。
 
         el.insertBefore(createElm(newChildren[i]), anchor);
+      }
+    }
+
+    if (oldStartIndex <= oldEndIndex) {
+      for (var _i = oldStartIndex; _i <= oldEndIndex; _i++) {
+        // 如果老的多 将老节点删除  但是可能里边有null的情况
+        if (oldChildren[_i] !== null) el.removeChild(oldChildren[_i].el);
       }
     }
   } // 创建真实节点
@@ -1335,7 +1398,7 @@
 
   initGlobalApi(Vue); //初始化全局api
 
-  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\"><li>A</li><li a = \"1\">B</li><li>C</li><li>D</li></div>";
+  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\">\n<li key=\"A\">A</li>\n<li key=\"B\">B</li>\n<li key=\"C\">C</li>\n<li key=\"D\">D</li>\n</div>";
   var vm1 = new Vue({
     data: {
       message: 'hello'
@@ -1345,7 +1408,7 @@
   var oldVnode = render1.call(vm1); //虚拟dom
 
   document.body.appendChild(createElm(oldVnode));
-  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\"><li>A</li><li>B</li><li>C</li><li>D</li><li>E</li></div>";
+  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\">\n<li key=\"B\">B</li>\n<li key=\"D\">D</li>\n<li key=\"C\">C</li>\n<li key=\"A\">A</li>\n</div>";
   var vm2 = new Vue({
     data: {
       message: 'hello1'

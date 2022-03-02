@@ -24,7 +24,12 @@ initGlobalApi(Vue) //初始化全局api
 import { compileToFunction } from './compiler/index'
 import { createElm, patch } from './vdom/patch'
 // diff核心
-let oldTemplate = `<div style = "color:red;background:blue" a = "1"><li>A</li><li a = "1">B</li><li>C</li><li>D</li></div>`
+let oldTemplate = `<div style = "color:red;background:blue" a = "1">
+<li key="A">A</li>
+<li key="B">B</li>
+<li key="C">C</li>
+<li key="D">D</li>
+</div>`
 
 let vm1 = new Vue({data: {message: 'hello'}})
 const render1 = compileToFunction(oldTemplate)
@@ -32,7 +37,12 @@ const oldVnode = render1.call(vm1) //虚拟dom
 document.body.appendChild(createElm(oldVnode))
 
 
-let newTemplate = `<div style = "color:red;background:blue" b = "1"><li>A</li><li>B</li><li>C</li><li>D</li><li>E</li></div>`
+let newTemplate = `<div style = "color:red;background:blue" b = "1">
+<li key="B">B</li>
+<li key="D">D</li>
+<li key="C">C</li>
+<li key="A">A</li>
+</div>`
 let vm2 = new Vue({data: {message: 'hello1'}})
 const render2 = compileToFunction(newTemplate)
 const newVnode = render2.call(vm2) //虚拟dom
