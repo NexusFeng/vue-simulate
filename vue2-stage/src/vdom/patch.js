@@ -50,7 +50,7 @@ export function patch(oldVnode, vnode) {
       el.innerHTML = `` //直接删除老节点
     }
     // vue的特点是每个组件都有一个watcher，当前数组中的数据变化 只需要更新当前组件
-    
+    return el
   }
 }
 

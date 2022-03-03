@@ -1,4 +1,5 @@
 import Watcher from "./observer/watcher"
+import { nextTick } from "./util"
 import { patch } from "./vdom/patch"
 
 
@@ -6,13 +7,15 @@ export function lifecycleMixin(Vue) {
   Vue.prototype._update = function(vnode) {
     // 既有初始化,又有更新
     const vm = this
-    console.log(vm.$el, vnode, '12')
-    vm.$el = patch( vm.$el, vnode)
-
+    const prevVnode = vm._vnode // 表示将当前的虚拟节点保存起来
+    if(!prevVnode) { // 初次渲染
+      vm.$el = patch( vm.$el, vnode)
+    } else {
+      vm.$el = patch(prevVnode, vnode)
+    }
+    vm._vnode = vnode
   }
-  Vue.prototype.$nextTick = function () {
-    
-  }
+  Vue.prototype.$nextTick = nextTick
 }
 // 后续每个组件渲染的时候都会有一个watcher
 export function mountComponent(vm, el) {

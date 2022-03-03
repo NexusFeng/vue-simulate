@@ -7,6 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <script src="dist/vue.js"></script>  
+  <!-- 循环时尽量不要使用索引作为key，可能会导致无法复用 -->
+  <!-- diff比较靠的是tag和key -->
+  <div id = "app">
+    <li>{{msg}}</li>
+  </div>
+  <script src="dist/vue.js"></script> 
+  <script>
+    let vm = new Vue({
+      el: '#app',
+      data: {
+        msg: 'hello'
+      }
+    })
+    setTimeout(() => {
+      vm.msg = 'zf'
+    }, 1000)
+  </script> 
 </body>
 </html>
