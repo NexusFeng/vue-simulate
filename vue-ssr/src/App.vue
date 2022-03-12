@@ -1,5 +1,6 @@
 <template>
-  <div>
+<!-- 得加一个id -->
+  <div id="app">
     <Foo></Foo>
     <Bar></Bar>
   </div>
