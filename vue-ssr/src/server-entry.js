@@ -6,18 +6,29 @@ import createApp from './app'
 
 // 服务端渲染可以返回一个函数
 
-export default ({url}) => {// 服务端调用方法时会传入url属性
+export default (context) => {// 服务端调用方法时会传入url属性
   // 此方法是在服务端调用的
   //路由时异步组件,需要等路由加载完成
+  const {url} = context
   return new Promise((resolve,reject) => {
-    let {app, router} = createApp()
+    let {app, router, store} = createApp()
     router.push(url)
     router.onReady(() => { //等待路由跳转完成  组件已经准备好了再触发
       const matchComponents = router.getMatchedComponents()
+
       if(matchComponents.length == 0) {//没有匹配到前端路由
         return reject({code: 404})
       } else {
-        resolve(app)
+        //matchComponents 指的是路由匹配到的所有组件(页面级别的组件)
+        Promise.all(matchComponents.map(component => {
+          if(component.asyncData) { // 服务端再渲染的时候,默认会找到页面级别组件中的asyncData,并且再服务端也会创建一个vuex,传递给asyncData
+            return component.asyncData(store)
+          }
+        })).then(() => {//会默认再window下生成一个变量 内部默认
+          context.state = store.state // 服务器执行完毕后 最新的状态保存在store.state上
+          resolve(app) //app是已经获取实例的字符串
+        })
+        
       }
     })
   })

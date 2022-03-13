@@ -51,3 +51,22 @@ app.listen(3000)
 
 // 在没有data-server-rendered属性的元素上,还可以向$mount函数的hydrating参数位置传入true,来强制使用激活模式
 // 在开发模式下,Vue将推断客户端生成的虚拟dom树是否与从服务器渲染的dom结构相匹配,如果无法匹配,将退出混合模式,丢弃现有的dom并从头渲染,在生产模式下,此检测会被跳过,直接使用服务端返回的结果，以免性能损耗
+
+// 1.服务端渲染核心  是解析vue的实例 生成一个字符串 返回给浏览器
+// createRenderer.renderToString(vm)
+// let vm = new Vue({
+//   template: '<div>hello world</div>'
+// })
+
+// 2.通过webpack打包 把所有的代码进行了打包返回一个函数，函数执行后的结果是一个promise => vue的实例
+// createBundleRenderer 找到webpack打包后的函数  内部会调用这个函数获取vue实例
+// .renderToString(vm) => 生成一个字符串返回给浏览器
+
+// createBundleRenderer 去调用函数 获取实例
+// renderToString根据实例生成一个字符串
+
+// node目的：可以解析js语法，可以将vue的实例渲染成字符串
+
+//默认直接url 回车输入 访问的是服务端(通过服务器渲染)
+
+// 数据再前端还是后端请求？ 看使用场景， 1.如果希望加载的html内容很快的显示,那就再服务端,2.如果是后续点击按钮 其他逻辑 可以使用前端请求
