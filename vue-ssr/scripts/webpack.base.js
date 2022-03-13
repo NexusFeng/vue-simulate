@@ -11,7 +11,7 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin')
 module.exports = {
   mode: 'development',
   output: {
-    fileName: '[name].bundle.js', // 默认是main.js 默认是dist目录
+    filename: '[name].bundle.js', // 默认是main.js 默认是dist目录
     path: path.resolve(__dirname, '../dist')
   },
   module: {
@@ -43,7 +43,6 @@ module.exports = {
     ]
   },
   plugins: [
-    
     new VueLoaderPlugin()
   ]
 }

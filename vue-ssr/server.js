@@ -17,17 +17,36 @@ const render =  VueServerRenderer.createBundleRenderer(serverBundle, {
 
 router.get('/', async ctx => {
   ctx.body = await new Promise((resolve, reject) => {
-    render.renderToString((err, html) => {//如果想让css生效,只能使用回调的方式
-      if(err) reject(err)
+    render.renderToString({url: ctx.url},(err, html) => {//如果想让css生效,只能使用回调的方式
+      if(err && err.code == 404) reject(err)
       resolve(html)
     })
   })
   
   // const html = await render.renderToString()//生成字符串
 })
+
+//当用户访问一个不存在的路径的服务端路径 返回首页,通过前端的js渲染的时候,会重新根据路劲渲染组件
+// 只要用户刷新就会向服务器发请求
+router.get('/(.*)', async ctx => {
+  ctx.body = await new Promise((resolve, reject) => {
+    render.renderToString({url: ctx.url},(err, html) => {//通过服务端渲染 渲染后返回
+      if(err) reject(err)
+      resolve(html)
+    })
+  })
+})
+
+
+//保证先走自己定义的路由,再走静态文件
+// app.use(router.routes())
+
+// 默认先查找静态目录
+
 // 当客户端发送请求时会先去dist目录下查找
-app.use(static(path.resolve(__dirname, 'dist')))
+app.use(static(path.resolve(__dirname, 'dist')))//顺序问题
 app.use(router.routes())
+// 
 app.listen(3000)
 
 // 在没有data-server-rendered属性的元素上,还可以向$mount函数的hydrating参数位置传入true,来强制使用激活模式

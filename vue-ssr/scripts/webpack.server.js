@@ -9,7 +9,7 @@ module.exports = merge(base,{
     server: path.resolve(__dirname, '../src/server-entry.js')
   },
   output: {
-    libraryTarget: "commonjs2"
+    libraryTarget: "commonjs2" //module.exports 导出
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -17,6 +17,7 @@ module.exports = merge(base,{
       filename: 'server.html',//默认名字是index.html
       excludeChunks: ['server'],
       minify: false,//不需要压缩
+      client: "/client.bundle.js"
     })
   ]
 })

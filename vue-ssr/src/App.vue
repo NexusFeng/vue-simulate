@@ -1,19 +1,22 @@
 <template>
 <!-- 得加一个id -->
   <div id="app">
-    <Foo></Foo>
-    <Bar></Bar>
+    <router-link to="/">foo</router-link>
+    <router-link to="/bar">bar</router-link>
+    <router-view></router-view>
+    <!-- <Foo></Foo>
+    <Bar></Bar> -->
   </div>
 </template>
 
 <script>
-import Bar from './component/Bar.vue'
-import Foo from './component/Foo.vue'
+// import Bar from './components/Bar.vue'
+// import Foo from './components/Foo.vue'
 export default {
-  components: {
-    Bar,
-    Foo
-  },
+  // components: {
+  //   Bar,
+  //   Foo
+  // },
   data() {
     return {
 
