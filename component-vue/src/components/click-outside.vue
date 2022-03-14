@@ -19,7 +19,7 @@ export default {
           if(!el.contains(e.target)) {
             //点击的是外面
             let fn = vnode.context[bindings.expression] //hide
-            fm()
+            fn()
           }
         }
         el.handler = handler

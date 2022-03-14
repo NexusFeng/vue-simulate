@@ -43,13 +43,14 @@ const loadImg = (src, resolve, reject) => {
   img.onerror = reject
 }
 
-const lazy  = (vue) => {
+const lazy  = (Vue) => {
 
   class ReactiveListener{
     constructor({el, src, options}){
       this.el = el
       this.src = src
       this.state = {loading: false}
+      this.options = options
     }
     checkInView() { //用来检测自己在不在可视区域内
       // 获取当前元素 距离屏幕的位置
