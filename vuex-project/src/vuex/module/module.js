@@ -15,7 +15,7 @@ class Module {
   forEachGetters(cb) {
     this._raw.getters && forEach(this._raw.getters, cb)
   }
-  forEachMutations(cb) {
+  forEachMutation(cb) {
     this._raw.mutations && forEach(this._raw.mutations, cb)
   }
   forEachActions(cb) {
