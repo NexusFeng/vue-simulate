@@ -7,6 +7,15 @@ class ModuleCollection {
     this.root = null
     this.register([], options)// 为了记录父子关系
   }
+  getNamespace(path) {
+    let root = this.root
+    let ns =  path.reduce((ns, key) => {
+      let module = root.getChild(key)
+      root = module
+      return module.namespaced ? ns + key + '/' : ns
+    }, '')
+    return ns
+  }
   register(path, rawModule) {
     let newModule = new Module(rawModule)
     
@@ -14,7 +23,7 @@ class ModuleCollection {
       this.root = newModule
     } else {
       //根据当前注册的key, 将它注册到对应的模块的儿子处
-      let parent = path.slice(0, -1).reduce((momo, currrent) => {
+      let parent = path.slice(0, -1).reduce((memo, currrent) => {
         return memo.getChild(currrent)
       }, this.root)
       parent.addChild(path[path.length - 1], newModule)

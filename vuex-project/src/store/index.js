@@ -4,7 +4,25 @@ import Vuex from '../vuex/index'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+function persists() {
+  return function (store) {
+    let localStorage = JSON.parse(localStorage.getItem('VUEX:STATE'))
+    if(localState) {
+      store.replaceState(localStorage)
+    }
+    store.subscribe((mutation, localStorage) => {
+      
+      // 状态一遍就存到localStorage中
+      // 得做防抖
+      localStorage.setItem('VUEX:STATE', JSON.stringify(localStorage))
+    })
+  }
+}
+
+export default new Vuex.Store({ // vuex持久化插件
+  plugins: [
+    persists() // 每次状态变化都可以存到localStorage中
+  ],
   state: {
     name: 'feng',
     age: 18

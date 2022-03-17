@@ -24,5 +24,9 @@ class Module {
   forEachChildren(cb) {
     this._children && forEach(this._children, cb)
   }
+  // 用于标识是否写了namespaced
+  get namespaced() {
+    return !!this._raw.namespaced
+  }
 }
 export default Module
