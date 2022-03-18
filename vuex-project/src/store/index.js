@@ -44,6 +44,7 @@ export default new Vuex.Store({ // vuex持久化插件
       return state.age + 10
     }
   },
+  strict: true, // 如果不是在mutation中操作的状态会发生警告
   modules: {
     namespaced: true,//能解决子模块和父模块的命名空间，相当于增加了一个命名空间
     // 如果没有namespaced 默认getters都会被定义到父模块上
@@ -64,11 +65,11 @@ export default new Vuex.Store({ // vuex持久化插件
 
       }
     },
-    b: {
-      state: {
-        name: 't2',
-        age: 20
-      }
-    }
+    // b: {
+    //   state: {
+    //     name: 't2',
+    //     age: 20
+    //   }
+    // }
   }
 })

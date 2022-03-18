@@ -18,7 +18,7 @@ class ModuleCollection {
   }
   register(path, rawModule) {
     let newModule = new Module(rawModule)
-    
+    rowModule.newModule = newModule // 自定义属性做存储
     if(path.length == 0) {
       this.root = newModule
     } else {

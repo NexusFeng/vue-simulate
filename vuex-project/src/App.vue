@@ -6,13 +6,26 @@
     <button @click="$store.dispatch('changeAge', 10)">异步点击</button>
 
     t1年龄{{this.$store.state.a.name}}
+    <button @click="registerModule">动态注册模块</button>
+    {{$store.state.b.name&&$store.state.b.name}}  {{$store.state.b.age&&$store.state.b.age}}
   </div>
 </template>
 
 <script>
+import store from './store'
 
 export default {
-  name: 'app'
+  name: 'app',
+  methods: {
+    registerModule() {
+      store.registerModule('b', {
+        state: {
+          name: 'fem=ng', 
+          age: 18
+        }
+      })
+    }
+  }
   
 }
 </script>
