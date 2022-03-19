@@ -2,6 +2,8 @@
 /vue2-stage/node_modules
 /vue-ssr/node_modules
 /component-vue/node_modules
+/vue-router/node_modules
+/vuex-project/node_modules
 
 # Editor directories and files
 .idea
