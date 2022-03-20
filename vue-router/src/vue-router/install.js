@@ -16,6 +16,9 @@ export default function install(_Vue) {
 
         // 初始化路由  只会初始化一次
         this._router.init(this) //整个应用的根 this是当前组件的实例
+        // vuex中的state 在哪里使用就会收集对应的watcher
+        // current里边的属性在哪里使用 就会收集对应的watcher
+        Vue.util.defineReactive(this, '_route',this._router.history.current)
       } else {
         //子
         this._routerRoot = this.$parent && this.$parent._routerRoot
@@ -24,15 +27,15 @@ export default function install(_Vue) {
     }
   })
 
-  Object.defineProperty(Vue.prototype, "$router", {
+  Object.defineProperty(Vue.prototype, "$router", { //存的方法
     get() {
-
+      return this._routerRoot._router
     }
   })
 
-  Object.defineProperty(Vue.prototype, "$route", {
+  Object.defineProperty(Vue.prototype, "$route", { // 存的都是属性
     get() {
-
+      return this._routerRoot._route
     }
   })
 

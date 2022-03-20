@@ -27,10 +27,16 @@ class VueRouter{
         this.history = new HTML5History(this)
         break
     }
-    
+    this.beforeHooks = []
   }
   match(location) {
     return this.matcher.match(location)
+  }
+  push(location) {
+    // 跳转页面
+    this.history.transitionTo(location, () => {
+      window.location.hash = location // 更改hash值
+    })
   }
   init(app) {
     const history = this.history  // 当前管理路由的
@@ -44,9 +50,18 @@ class VueRouter{
       history.setUpListener()
     }
     history.transitionTo(history.getCurrentLocation(), setUpListener)
+    history.listen((route) => {
+      // 监听 如果current变化了 就重新给_route赋值
+      app._route = route
+    })
+  }
+  beforeEach(fn){
+    this.beforeHooks.push(fn)
   }
 }
 VueRouter.install = install
 
 
 export default VueRouter
+
+// 路由的钩子执行思路和koa express中间件的原理一样 就是把所有的钩子组成一个数组依次执行
