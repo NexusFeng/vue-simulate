@@ -35,7 +35,7 @@ class VueRouter{
   push(location) {
     // 跳转页面
     this.history.transitionTo(location, () => {
-      window.location.hash = location // 更改hash值
+      this.history.pushState(location)
     })
   }
   init(app) {
