@@ -79,7 +79,6 @@ function defineReactive(data, key, value){//value有可能是对象
     }
   })
 }
-
 export function observe (data) {
   //如果是对象类型才观测
   if(!isObject(data)) {

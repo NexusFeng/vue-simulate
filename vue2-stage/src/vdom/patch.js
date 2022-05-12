@@ -17,7 +17,6 @@ export function patch(oldVnode, vnode) {
       // 可以通过vnode.el属性获取现在的真实dom
       return oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el)
     }
-    
 
     let el = vnode.el = oldVnode.el //表示当新节点复用老节点
     

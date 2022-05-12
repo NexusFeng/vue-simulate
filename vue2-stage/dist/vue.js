@@ -748,6 +748,8 @@
         el.innerHTML = ""; //直接删除老节点
       } // vue的特点是每个组件都有一个watcher，当前数组中的数据变化 只需要更新当前组件
 
+
+      return el;
     }
   }
 
@@ -936,11 +938,20 @@
     Vue.prototype._update = function (vnode) {
       // 既有初始化,又有更新
       var vm = this;
-      console.log(vm.$el, vnode, '12');
-      vm.$el = patch(vm.$el, vnode);
+      var prevVnode = vm._vnode; // 表示将当前的虚拟节点保存起来
+
+      if (!prevVnode) {
+        // 初次渲染
+        vm.$el = patch(vm.$el, vnode);
+        console.log(vm.$el, vnode, '111');
+      } else {
+        vm.$el = patch(prevVnode, vnode);
+      }
+
+      vm._vnode = vnode;
     };
 
-    Vue.prototype.$nextTick = function () {};
+    Vue.prototype.$nextTick = nextTick;
   } // 后续每个组件渲染的时候都会有一个watcher
 
   function mountComponent(vm, el) {
@@ -1397,30 +1408,6 @@
   stateMixin(Vue); // 在类上扩展
 
   initGlobalApi(Vue); //初始化全局api
-
-  var oldTemplate = "<div style = \"color:red;background:blue\" a = \"1\">\n<li key=\"A\">A</li>\n<li key=\"B\">B</li>\n<li key=\"C\">C</li>\n<li key=\"D\">D</li>\n</div>";
-  var vm1 = new Vue({
-    data: {
-      message: 'hello'
-    }
-  });
-  var render1 = compileToFunction(oldTemplate);
-  var oldVnode = render1.call(vm1); //虚拟dom
-
-  document.body.appendChild(createElm(oldVnode));
-  var newTemplate = "<div style = \"color:red;background:blue\" b = \"1\">\n<li key=\"B\">B</li>\n<li key=\"D\">D</li>\n<li key=\"C\">C</li>\n<li key=\"A\">A</li>\n</div>";
-  var vm2 = new Vue({
-    data: {
-      message: 'hello1'
-    }
-  });
-  var render2 = compileToFunction(newTemplate);
-  var newVnode = render2.call(vm2); //虚拟dom
-  // 根据新的虚拟节点更新老的节点，老的节点能复用就复用
-
-  setTimeout(function () {
-    patch(oldVnode, newVnode);
-  }, 2000);
 
   return Vue;
 

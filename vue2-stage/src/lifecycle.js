@@ -10,6 +10,7 @@ export function lifecycleMixin(Vue) {
     const prevVnode = vm._vnode // 表示将当前的虚拟节点保存起来
     if(!prevVnode) { // 初次渲染
       vm.$el = patch( vm.$el, vnode)
+      console.log(vm.$el, vnode, '111')
     } else {
       vm.$el = patch(prevVnode, vnode)
     }
